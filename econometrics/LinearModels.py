@@ -189,13 +189,14 @@ class OLS:
         Formula
         ----------
         The p-values are computes as:
-        p_value = 2 * (1 - T_n(sigma_b))
+        p_value = 2 * (1 - T_n(t_value))
         
          * T denotes the Student Cumulative Distribution Function with n degrees of freedom
-         * sigma_b denotes the standard deviation computed for a given estimate b
         
         The covariance matrix of beta is compute by:
         Var(b) = sigma_b**2 * (X'X)^-1
+
+         * sigma_b denotes the standard deviation computed for a given estimate b
                 
         Reference
         ----------
