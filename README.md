@@ -1,2 +1,2 @@
-# PLEAS
-Python Library for Econometrics and Advanced Statistics
+# Statspy
+Python library for econometrics and advanced statistics
