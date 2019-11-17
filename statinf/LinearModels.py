@@ -10,11 +10,8 @@ import numpy as np
 from scipy import stats
 import pandas as pd
 
-
-#TODO: qdd Fisher test
-#TODO: Format Summary
-#TODO: Add Log-Likehood (if relevant)
-#TODO: Make model use pandas DataFrame as an option
+#TODO: Add Fisher test
+#TODO: Add Log-Likehood + AIC + BIC
 #TODO: Add dask for GPU usage
 
 
@@ -35,15 +32,20 @@ class OLS:
     X = []
     Y = []
     
-    def __init__(self, X, Y, fit_intercept = False):
+    def __init__(self, formula, data, fit_intercept = True):
         super(OLS, self).__init__()
-        self.X = X
+        # Parse formula
+        self.no_space_formula = formula.replace(' ', '')
+        self.Y_col = self.no_space_formula.split('~')[0]
+        self.X_col = self.no_space_formula.split('~')[1].split('+')
+        # Subset X
+        self.X = data[self.X_col].to_numpy()
         # Target variable
-        self.Y = Y
+        self.Y = data[self.Y_col].to_numpy()
         # Degrees of freedom of the population
-        self.dft = X.shape[0] - 1
+        self.dft = X.shape[0]
         # Degree of freedom of the residuals
-        self.dfe = X.shape[0] - X.shape[1] - 1
+        self.dfe = X.shape[0] - X.shape[1]
         # Size of the population
         self.n = X.shape[0]
         # Number of explanatory variables / estimates
@@ -51,8 +53,14 @@ class OLS:
         # Use intercept or only explanatory variables
         self.fit_intercept = fit_intercept
     
+    def get_X(self):
+        if self.fit_intercept:
+            return(np.hstack((np.ones((self.n, 1), dtype=self.X.dtype), self.X)))
+        else:
+            return(self.X)
+    
     def get_betas(self):
-    	"""
+        """
         Computes the estimates for each explanatory variable
         
         Formula
@@ -63,49 +71,49 @@ class OLS:
          * Y is a vector for the target variable
          * ' denotes the transpose operator
          * ^-1 denotes the inverse operator
-
+        
         Returns
         ----------
         betas
-        	The estimated coefficients.
+            The estimated coefficients.
         """
-        XtX = self.X.T.dot(self.X)
+        XtX = self.get_X().T.dot(self.get_X())
         XtX_1 = np.linalg.inv(XtX)
-        XtY = self.X.T.dot(self.Y)
+        XtY = self.get_X().T.dot(self.Y)
         beta = XtX_1.dot(XtY)
         return(beta)
     
     def fitted_values(self):
-    	"""
+        """
         Computes the estimated values of Y
         
         Formula
         ----------
         Y_hat = bX
-
+        
         Returns
         ----------
         Y_hat
-        	The fitted values of Y.
+            The fitted values of Y.
         """
         betas = self.get_betas()
         Y_hat = np.zeros(len(self.Y))
         for i in range(len(betas)):
-            Y_hat += (betas[i] * self.X.T[i])
+            Y_hat += (betas[i] * self.get_X().T[i])
         return(Y_hat)
     
     def get_error(self):
-    	"""
+        """
         Compute the error term/residuals
         
         Formula
         ----------
         res = Y - Y_hat
-
+        
         Returns
         ----------
         res
-        	The estimated residual term.
+            The estimated residual term.
         """
         res = self.Y - self.fitted_values()
         return(res)
@@ -163,6 +171,13 @@ class OLS:
         adj_r_2 = 1 - (1 - self.r_squared()) * (self.n - 1) / (self.n - self.p - 1)
         return(adj_r_2)
     
+    def fisher(self):
+        """
+        """
+        MSE = (self.tss() - self.rss()) / (self.p - 1)
+        MSR = self.rss() / self.dfe
+        return(MSE/MSR)
+    
     def summary(self):
         """
         Returns statistics summary for estimates
@@ -176,7 +191,7 @@ class OLS:
         
         The covariance matrix of beta is compute by:
         Var(b) = sigma_b**2 * (X'X)^-1
-
+        
          * sigma_b denotes the standard deviation computed for a given estimate b
                 
         Reference
@@ -186,24 +201,43 @@ class OLS:
         # Initialize
         betas = self.get_betas()
         # Add intercept if fit is asked by user
-        if self.fit_intercept:
-            newX = np.append(np.ones((len(X),1)), X, axis=1)
-        else:
-            newX = self.X.copy()
         
-        sigma_2 = (sum((self.get_error())**2))/(len(newX) - len(newX[0]))
-        variance_beta = sigma_2 * (np.linalg.inv(np.dot(newX.T, newX)).diagonal())
+        sigma_2 = (sum((self.get_error())**2))/(len(self.get_X()) - len(self.get_X()[0]))
+        variance_beta = sigma_2 * (np.linalg.inv(np.dot(self.get_X().T, self.get_X())).diagonal())
         std_err_beta = np.sqrt(variance_beta)
         t_values = betas/ std_err_beta
         
-        p_values =[2 * (1 - stats.t.cdf(np.abs(i), (len(newX)-1))) for i in t_values]
+        p_values =[2 * (1 - stats.t.cdf(np.abs(i), (len(self.get_X())-1))) for i in t_values]
         
         summary_df = pd.DataFrame()
+        summary_df["Variables"] = ['(Intercept)'] + self.X_col if self.fit_intercept else self.X_col
         summary_df["Coefficients"] = betas
         summary_df["Standard Errors"] = std_err_beta
         summary_df["t values"] = t_values
         summary_df["Probabilites"] = p_values
         
-        return(summary_df)
+        r2 = ols.r_squared()
+        adj_r2 = ols.adjusted_r_squared()
+        #
+        fisher = self.fisher()
+        #
+        print(f'=========================================================================')
+        print(f'                               OLS summary                               ')
+        print(f'=========================================================================')
+        print(f'| R² = {round(r2, 5)}                  | Adjusted-R² = {round(adj_r2, 5)}')
+        print(f'| n = {self.n}                       | p = {self.p}')
+        print(f'| Fisher = {round(fisher, 5)}            | Adjusted-R² = {round(adj_r2, 5)}')
+        print(f'=========================================================================')
+        print(summary_df.to_string(index=False))
 
 
+
+# Test:
+import statinf.GenerateData as gd
+
+df = generate_dataset(coeffs=[1.2556, 3.465, 1.665414,9.5444], n=100, std_dev=50, intercept=3.6441)
+
+formula = "Y ~ X1 + X2 + X3 + X0"
+ols = OLS(formula, df, fit_intercept = True)
+
+ols.summary()

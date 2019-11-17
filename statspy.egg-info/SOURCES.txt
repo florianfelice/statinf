@@ -1,7 +1,0 @@
-README.md
-setup.py
-statspy.egg-info/PKG-INFO
-statspy.egg-info/SOURCES.txt
-statspy.egg-info/dependency_links.txt
-statspy.egg-info/requires.txt
-statspy.egg-info/top_level.txt
