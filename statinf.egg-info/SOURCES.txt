@@ -1,5 +1,6 @@
 README.md
 setup.py
+setup_new.py
 statinf.egg-info/PKG-INFO
 statinf.egg-info/SOURCES.txt
 statinf.egg-info/dependency_links.txt
