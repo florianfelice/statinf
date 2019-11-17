@@ -25,8 +25,11 @@ class Logit:
         intercept = np.ones((X.shape[0], 1))
         return np.concatenate((intercept, X), axis=1)
     
-    def __logistic(self, z):
+    def __logistic_cdf(self, z):
         return 1 / (1 + np.exp(-z))
+
+    def __logistic_pdf(self, z):
+        return np.exp(-z) / ((1 + np.exp(-z))**2)
 
     def __log_likelihood(x, y, weights):
         z = np.dot(x, weights)
@@ -41,8 +44,9 @@ class Logit:
         self.theta = np.zeros(X.shape[1])
         
         for i in range(self.num_iter):
-            h = self.__sigmoid(z)
-            gradient = sum(y*log(h)+(1-y)*log(1-h))
+            h_cdf = self.__logistic_cdf(z)
+            h_pdf = self.__logistic_pdf(z)
+            gradient = sum(((y - h_cdf)/(h_cdf(1-h_cdf)))*h_cdf*X)
             self.theta -= self.lr * gradient
             
             if(self.verbose == True and i % 10000 == 0):
