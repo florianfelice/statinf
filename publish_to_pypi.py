@@ -69,7 +69,7 @@ with open(lib_path + '/setup_template.py') as f:
 all_reqs = '"' + '",\n          "'.join(requirements) + '"'
 
 # Update template
-template = template.format(library=library, version=new_version, desc=desc, requirements=all_reqs)
+template = template.format(library=library.lower(), version=new_version, desc=desc, requirements=all_reqs)
 
 # And write the new setup file
 with open(lib_path + '/setup_new.py', "w") as f:
