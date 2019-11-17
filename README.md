@@ -1,2 +1,2 @@
-# Statspy
-Python library for econometrics and advanced statistics
+# Statinf
+Python library for statistics and causal inference
