@@ -28,11 +28,11 @@ parser.add_argument("-p", "--publish", action="store_true", help="Publish to Git
 args = parser.parse_args()
 
 if sys.platform in ['darwin']:
-    path = f'/User/{getpass.getuser()}/Documents/'
+    path = f'/Users/{getpass.getuser()}/Documents/'
 elif sys.platform in ['linux']:
     path = f'/home/{getpass.getuser()}/'
 elif sys.platform in ['win32']:
-    path = f'C:/User/{getpass.getuser()}/Documents/'
+    path = f'C:/Users/{getpass.getuser()}/Documents/'
 
 lib_path = path + library
 
