@@ -43,13 +43,13 @@ class OLS:
         # Target variable
         self.Y = data[self.Y_col].to_numpy()
         # Degrees of freedom of the population
-        self.dft = X.shape[0]
+        self.dft = self.X.shape[0]
         # Degree of freedom of the residuals
-        self.dfe = X.shape[0] - X.shape[1]
+        self.dfe = self.X.shape[0] - self.X.shape[1]
         # Size of the population
-        self.n = X.shape[0]
+        self.n = self.X.shape[0]
         # Number of explanatory variables / estimates
-        self.p = X.shape[1]
+        self.p = self.X.shape[1]
         # Use intercept or only explanatory variables
         self.fit_intercept = fit_intercept
     
@@ -216,23 +216,41 @@ class OLS:
         summary_df["t values"] = t_values
         summary_df["Probabilites"] = p_values
         
-        r2 = ols.r_squared()
-        adj_r2 = ols.adjusted_r_squared()
+        r2 = self.r_squared()
+        adj_r2 = self.adjusted_r_squared()
         #
         fisher = self.fisher()
         #
-        print(f'=========================================================================')
-        print(f'                               OLS summary                               ')
-        print(f'=========================================================================')
-        print(f'| R² = {round(r2, 5)}                  | Adjusted-R² = {round(adj_r2, 5)}')
-        print(f'| n = {self.n}                       | p = {self.p}')
-        print(f'| Fisher = {round(fisher, 5)}            | Adjusted-R² = {round(adj_r2, 5)}')
-        print(f'=========================================================================')
+        print('=========================================================================')
+        print('                               OLS summary                               ')
+        print('=========================================================================')
+        print('| R² = {:.5f}                  | Adjusted-R² = {:.5f}'.format(r2, adj_r2))
+        print('| n  = {:6}                   | p = {:5}'.format(self.n, self.p))
+        print('| Fisher = {:.5f}                         '.format(fisher))
+        print('=========================================================================')
         print(summary_df.to_string(index=False))
+    
+    def predict(self, new_data):
+        """
+        Returns predicted values Y_hat for for a new dataset
+        
+        Formula
+        ----------
+        Y = X \beta
+        
+        """
+        X_array = new_data[self.X_col].to_numpy()
+        if self.fit_intercept:
+            new_X = np.hstack((np.ones((new_data.shape[0], 1), dtype=X_array.dtype), X_array))
+        else:
+            new_X = X_array
+        
+        return np.dot(new_X, self.get_betas())
 
 
 
 # Test:
+"""
 import statinf.GenerateData as gd
 
 df = generate_dataset(coeffs=[1.2556, 3.465, 1.665414,9.5444], n=100, std_dev=50, intercept=3.6441)
@@ -241,3 +259,4 @@ formula = "Y ~ X1 + X2 + X3 + X0"
 ols = OLS(formula, df, fit_intercept = True)
 
 ols.summary()
+"""
