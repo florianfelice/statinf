@@ -1,14 +1,38 @@
 import numpy as np
 
 
+
+# Default activation functions
 def sigmoid(x):
+    """
+    Args:
+        x (float): Input value.
+    
+    Formula:
+        $\sigmoid(x) = \dfrac{1}{1 + e^{-x}} $
+    
+    Returns:
+        float: Sigmoid of x
+    """
     return 1 / (1 + np.exp(-x))
 
 
 def tanh(x):
+    """
+    Args:
+        x (float): Input value.
+    
+    Formula:
+        $\tanh(x)$
+    
+    Returns:
+        float: Hyperbloic tangent of x
+    """
     return np.tanh(x)
 
 
+
+# Derivatives of activation functions
 def d_sigmoid(x, is_activated=False):
     """
     Args:

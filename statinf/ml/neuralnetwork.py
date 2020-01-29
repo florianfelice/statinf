@@ -8,7 +8,6 @@ from .losses import *
 from .activations import tanh, sigmoid
 from .activations import d_tanh, d_sigmoid
 
-np.random.seed(100)
 
 
 """
@@ -17,17 +16,19 @@ Original code from: https://blog.zhaytam.com/2018/08/15/implement-neural-network
 """
 
 ## TODO: Use class for non binary output
-## TODO: Merge Layer and NeuralNetwork class for add_layer function
+## TODO: Merge Layer and NeuralNetwork class for add_layer function?
 ## TODO: Make function use pandas
 
 np.random.seed(100)
 
+
+#! Log stability issue with linear activation??
 class Layer:
     """
     Represents a layer (hidden or output) in our neural network.
     """
 
-    def __init__(self, n_input, n_neurons, activation=None, weights=None, bias=None):
+    def __init__(self, n_input, n_neurons, activation='linear', weights=None, bias=None):
         """
         :param int n_input: The input size (coming from the input layer or a previous hidden layer)
         :param int n_neurons: The number of neurons in this layer.
@@ -36,9 +37,9 @@ class Layer:
         :param bias: The layer's bias.
         """
         
-        self.weights = np.random.rand(n_input, n_neurons) # weights if weights is not None else 
+        self.weights = weights if weights is not None else np.random.rand(n_input, n_neurons)
         self.activation = activation
-        self.bias = np.random.rand(n_neurons) # bias if bias is not None else 
+        self.bias = bias if bias is not None else np.random.rand(n_neurons)
         self.last_activation = None
         self.error = None
         self.delta = None
@@ -49,11 +50,8 @@ class Layer:
         :param x: The input.
         :return: The result.
         """
-        Xb = np.dot(x, self.weights)
-        if verbose:
-            print(self.weights)
-        Xb_e = Xb + self.bias
-        self.last_activation = self._apply_activation(Xb_e)
+        
+        self.last_activation = self._apply_activation(x)
         # print(self.last_activation)
         return self.last_activation
 
@@ -93,8 +91,6 @@ class Layer:
         if self.activation == 'sigmoid':
             return r * (1 - r)
 
-        return r
-
 
 class NeuralNetwork:
     """
@@ -121,7 +117,12 @@ class NeuralNetwork:
         """
 
         for layer in self._layers:
-            X = layer.activate(X, verbose=verbose)
+            # print(layer)
+            Xb = X.dot(layer.weights)
+            if verbose:
+                print(layer.weights)
+            Xb_e = Xb + layer.bias
+            X = layer.activate(Xb_e, verbose=verbose)
 
         return X
 
@@ -152,18 +153,23 @@ class NeuralNetwork:
         :param y: The target values.
         :param float learning_rate: The learning rate (between 0 and 1).
         """
-
+        # print('# Feedforward')
         # Feed forward for the output
-        output = self.feed_forward(X, verbose=True)
+        output = self.feed_forward(X, verbose=False)
+        # print(output)
+        # Store evolution of the last predicted value
+        self.last_predicted = output
 
+        # print('# Feedforward')
         # Loop over the layers backward
         for i in reversed(range(len(self._layers))):
             layer = self._layers[i]
 
             # If this is the output layer
             if layer == self._layers[-1]:
+                # print('- Last layer')
                 layer.error = y - output
-                print(output)
+                # print(output)
                 # The output = layer.last_activation in this case
                 layer.delta = layer.error * layer.apply_activation_derivative(output)
             else:
@@ -178,7 +184,7 @@ class NeuralNetwork:
             input_to_use = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
             layer.weights += layer.delta * input_to_use.T * learning_rate
 
-    def cost(self, y_true, y_pred, loss=None, verbose=False):
+    def compute_loss(self, y_true, y_pred, loss=None, verbose=False):
         """
         """
         ls = loss if loss is not None else self.loss
@@ -191,7 +197,7 @@ class NeuralNetwork:
         else:
             raise ValueError('Loss function is not valid')
     
-    def train(self, X, y, learning_rate, max_epochs, verbose_every=50, plot=False):
+    def train(self, X, y, max_epochs, learning_rate=0.01, verbose_every=50, plot=False):
         """
         Trains the neural network using backpropagation.
         :param X: The input values.
@@ -205,12 +211,15 @@ class NeuralNetwork:
 
         for i in range(max_epochs):
             for j in range(len(X)):
+                # print(f'X = {X[j]}, Y = {y[j]}')
+                # print(j)
                 self.backpropagation(X[j], y[j], learning_rate)
-            
+            # print(self.last_predicted)
             ## Compute accuracy
             #mse = np.mean(np.square(y - self.feed_forward(X)))
-            pred = self.feed_forward(X)
-            acc = self.cost(y_true=y, y_pred=pred, loss=self.loss)
+            ## Feedforward with updated weights
+            ff_update = self.feed_forward(X)
+            acc = self.compute_loss(y_true=y, y_pred=ff_update, loss=self.loss)
             losses.append(acc)
             
             # Display progress
