@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="statinf",
-    version="1.0.6",
+    version="1.0.7",
     author="Florian Felice",
     author_email="florian.felice@outlook.com",
     description="A library for statistics and causal inference",
@@ -16,7 +16,8 @@ setuptools.setup(
     install_requires=[
           "pandas>=0.24.1",
           "numpy>=1.16.3",
-          "scipy>=1.2.1"
+          "scipy>=1.2.1",
+          "theano>=1.0.4"
       ],
     classifiers=[
         "Programming Language :: Python :: 3",

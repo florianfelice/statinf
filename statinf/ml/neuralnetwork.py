@@ -1,12 +1,9 @@
-import os
-import sys
 import theano
 import theano.tensor as T
 import pandas as pd
 import numpy as np
 import random
-
-from sklearn.model_selection import KFold
+import matplotlib.pyplot as plt
 
 
 """
@@ -15,6 +12,7 @@ DeepLearning website - Yoshua Bengio:
 """
 
 ## TODO: add batch
+## TODO: comment out
         
 class Layer(object):
     def __init__(self, n_in, n_out, W=None, b=None, activation=None, seed=None):
