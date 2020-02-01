@@ -1,4 +1,4 @@
-# Statinf
+# STATINF
 
 `statinf` is a library for statistics and causal inference.
 It provides main the statistical models ranging from the traditional OLS to Neural Networks.
