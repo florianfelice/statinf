@@ -1,6 +1,5 @@
 import numpy as np
-
-
+import theano.tensor as T
 
 # Default activation functions
 def sigmoid(x):
@@ -31,42 +30,49 @@ def tanh(x):
     return np.tanh(x)
 
 
-
-# Derivatives of activation functions
-def d_sigmoid(x, is_activated=False):
+def relu(x):
     """
     Args:
         x (float): Input value.
-        is_activated (bool): Is the input value already an output of an activation function (defaults False).
-
+    
     Formula:
-        $\dfrac{\partial}{\partial x} \sigmoid(x) = \sigmoid(x) \times (1 - \sigmoid(x))$
-
+        $\relu(x) = \max(0, x)$
+    
     Returns:
-        float: Derivative value of sigmoid.
+        float: Hyperbloic tangent of x
     """
-    if is_activated:
-        d_f = x * (1 - x)
+    if x > 0.:
+        return x
     else:
-        d_f = sigmoid(x) * (1 - sigmoid(x))
-    return d_f
+        return 0
 
-
-def d_tanh(x, is_activated=False):
+def softplus(x):
     """
     Args:
         x (float): Input value.
-        is_activated (bool): Is the input value already an output of an activation function (defaults False).
-
+    
     Formula:
-        $\dfrac{\partial}{\partial x} \tanh(x) = 1 - \tanh^2(x)$
-
+        $\softplus(x) = \log(1 + e^{-x})$
+    
     Returns:
-        float: Derivative value of tanh.
+        float: Hyperbloic tangent of x
     """
+    return np.log(1 + np.exp(-x))
 
-    if is_activated:
-        d_f = 1 - (x ** 2)
+
+
+def logit(x, weights, bias, tensor=False):
+    """
+    Args:
+        x (float): Input value.
+    
+    Formula:
+        $\sigmoid(x) = \dfrac{1}{1 + e^{-x}} $
+    
+    Returns:
+        float: Sigmoid of x
+    """
+    if tensor:
+        return 1 / (1 + T.exp(-T.dot(x, weights) + bias))
     else:
-        d_f = 1 - (tanh(x) ** 2)
-    return d_f
+        return 1 / (1 + np.exp(-x.dot(weights) + bias))

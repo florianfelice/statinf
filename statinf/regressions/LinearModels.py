@@ -64,7 +64,7 @@ class OLS:
         Computes the estimates for each explanatory variable
         
         Formula
-        ----------
+        -------
         b = (X'X)^-1 X'Y
         
          * X is a matrix for the explanatory variables
@@ -73,7 +73,7 @@ class OLS:
          * ^-1 denotes the inverse operator
         
         Returns
-        ----------
+        -------
         betas
             The estimated coefficients.
         """
@@ -88,11 +88,11 @@ class OLS:
         Computes the estimated values of Y
         
         Formula
-        ----------
+        -------
         Y_hat = bX
         
         Returns
-        ----------
+        -------
         Y_hat
             The fitted values of Y.
         """
@@ -107,11 +107,11 @@ class OLS:
         Compute the error term/residuals
         
         Formula
-        ----------
+        -------
         res = Y - Y_hat
         
         Returns
-        ----------
+        -------
         res
             The estimated residual term.
         """
@@ -123,7 +123,7 @@ class OLS:
         Computes Residual Sum of Squares
         
         Formula
-        ----------
+        -------
         RSS = Sum(y_i - y_hat_i)**2
         
          * y_i denotes the true/observed value of y for individual i
@@ -136,7 +136,7 @@ class OLS:
         Computes Total Sum of Squares.
         
         Formula
-        ----------
+        -------
         TSS = Sum(Y_i - Y_bar)**2
         """
         y_bar = self.Y.mean()
@@ -148,7 +148,7 @@ class OLS:
         Computes the standard R**2
         
         Formula
-        ----------
+        -------
         R**2 = 1 - RSS / TSS        
         """
         return(1 - self.rss()/self.tss())
@@ -158,14 +158,14 @@ class OLS:
         Computes Adjusted R**2.
         
         Formula
-        ----------
+        -------
         Adjusted R**2 = 1 - (1 - R**2) * (n - 1) / (n - p - 1)
         
          * p denotes the number of estimates (i.e. explanatory variables)
          * n denotes the sample size
         
         Reference
-        ----------
+        ---------
         Theil, Henri (1961). Economic Forecasts and Policy
         """
         adj_r_2 = 1 - (1 - self.r_squared()) * (self.n - 1) / (self.n - self.p - 1)
@@ -183,7 +183,7 @@ class OLS:
         Returns statistics summary for estimates
         
         Formula
-        ----------
+        -------
         The p-values are computes as:
         p_value = 2 * (1 - T_n(t_value))
         
@@ -195,7 +195,7 @@ class OLS:
          * sigma_b denotes the standard deviation computed for a given estimate b
                 
         Reference
-        ----------
+        ---------
         Student. (1908). The probable error of a mean. Biometrika, 1-25.
         """
         # Initialize
@@ -235,7 +235,7 @@ class OLS:
         Returns predicted values Y_hat for for a new dataset
         
         Formula
-        ----------
+        -------
         Y = X \beta
         
         """

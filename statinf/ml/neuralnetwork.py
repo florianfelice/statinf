@@ -5,6 +5,8 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
+from .initilizations import init_params
+from .activations import tanh, sigmoid, relu, softplus
 
 """
 DeepLearning website - Yoshua Bengio:
@@ -13,36 +15,65 @@ DeepLearning website - Yoshua Bengio:
 
 ## TODO: add batch
 ## TODO: comment out
+
+T_activations = {None: None,
+                'linear': None,
+                'tanh': T.tanh,
+                'sigmoid': T.nnet.sigmoid,
+                'relu': T.nnet.relu,
+                'softplus': T.nnet.softplus,
+                }
+
+activations = {None: None,
+                'linear': None,
+                'tanh': tanh,
+                'sigmoid': sigmoid,
+                'relu': relu,
+                'softplus': softplus,
+                }
         
 class Layer(object):
-    def __init__(self, n_in, n_out, W=None, b=None, activation=None, seed=None):
+    def __init__(self, n_in, n_out, W=None, b=None, activation=None, seed=None, init_weights='xavier', init_bias='zeros'):
       
         self.input = input
+        self.activation = activation
+        self.f = T_activations[activation]
+        self.activate = activations[activation]
 
         if W is None:
-            rdm = np.random.RandomState(seed) if seed is not None else np.random
-            W_values = np.asarray(rdm.normal(1., 0., n_in * n_out).reshape((n_in, n_out)), dtype=theano.config.floatX)
-            W_values = np.asarray(rdm.uniform(
-                    low = -np.sqrt(6. / (n_in + n_out)),
-                    high = np.sqrt(6. / (n_in + n_out)),
-                    size = (n_in, n_out)), dtype=theano.config.floatX)
+            # If weights matrix is not provided (default), initialize from a distribution
+            W_values = init_params(rows=n_in, cols=n_out, method=init_weights, seed=seed)
+            # Multiply by 4 the weights for sigmoid activation. See Y. Bengio's website
             if activation == theano.tensor.nnet.sigmoid:
                 W_values *= 4
-
-            W = theano.shared(value=W_values, name='W', borrow=True)
+        elif W.shape == (n_in, n_out):
+            raise ValueError(f'Weights dimension does not match. Dimension for W should be {(n_in, n_out)} and got {W.shape}.')
 
         if b is None:
-            b_values = np.zeros((n_out,), dtype=theano.config.floatX)
-            b = theano.shared(value=b_values, name='b', borrow=True)
+            # If bias matrix is not provided (default), initialize from a distribution
+            b_values = init_params(rows=1, cols=n_out, method=init_bias, seed=seed)
+        elif b.shape == (n_in, n_out):
+            raise ValueError(f'Weights dimension does not match. Dimension for b should be {(1, n_out)} and got {b.shape}.')
+        
+        # Share parameters with theano
+        W = theano.shared(value=W_values, name='W', borrow=True)
+        b = theano.shared(value=b_values, name='b', borrow=True)
 
+        # Store parameters in the class
         self.W = W
         self.b = b
-        # parameters of the model
+        
+        # Parameters of the model
         self.params = [self.W, self.b]
 
-    def feed_forward(self, input, activation=None):
-        lin_output = T.dot(input, self.W) + self.b
-        self.output = (lin_output if activation in [None, 'linear'] else activation(lin_output))
+    def feed_forward(self, input, tensor=True):
+        if tensor:
+            Xb_e = T.dot(input, self.W) + self.b
+            self.output = (Xb_e if self.activation in [None, 'linear'] else self.f(Xb_e))
+        else:
+            # Used as feed forward for prediction (avoid using Theano)
+            Xb_e = input.dot(self.W.get_value()) + self.b.get_value()
+            self.output = (Xb_e if self.activation in [None, 'linear'] else self.activate(Xb_e))
         return self.output
 
 class MLP:
@@ -83,10 +114,15 @@ class MLP:
         
         self._layers.append(layer)
     
-    def cost(self, x, y):
+    def forward_prop(self, x, tensor=True):
         output = x
         for layer in self._layers:
-            output = layer.feed_forward(output)
+            output = layer.feed_forward(output, tensor)
+        return output
+
+    def cost(self, x, y):
+        output = self.forward_prop(x)
+        # Compute loss
         if self.loss.lower() in ['mse', 'mean_squared_error']:
             _cost = ((output - y) ** 2).sum()
         else:
@@ -143,7 +179,7 @@ class MLP:
         
         return weights
  
-    def train(self, data, X, Y='Y', epochs=100, batch_size=1, training_size=0.8, learning_rate=0.01, L1_reg=0., L2_reg=0.):
+    def train(self, data, X, Y='Y', epochs=100, batch_size=1, training_size=0.8, test_set=None, learning_rate=0.01, L1_reg=0., L2_reg=0., early_stop=True, restore_weights=True, verbose=False, plot=False):
         """
         Train the Neural Network.
         
@@ -175,27 +211,38 @@ class MLP:
         self.learning_rate = learning_rate
         self.L1_reg = L1_reg
         self.L2_reg = L2_reg
+        self.X_col = X
+        self.Y_col = Y
 
-        # Prepare K-fold
         # Get indexes
         self.data_size = data.shape[0]
-        data_idx = list(data.index)
-        train_index = random.sample(data_idx, int(self.data_size * training_size))
-        test_index = [i for i in data_idx if i not in train_index]
 
-        # Train set
-        valid_set_x = data.loc[train_index, X]
-        valid_set_y = data.loc[train_index, Y]
+        if test_set is None:
+            data_idx = list(data.index)
+            train_index = random.sample(data_idx, int(self.data_size * training_size))
+            test_index = [i for i in data_idx if i not in train_index]
+            # Train set
+            valid_set_x = data.loc[train_index, self.X_col]
+            valid_set_y = data.loc[train_index, self.Y_col]
+            # Test set
+            test_set_x = data.loc[test_index, self.X_col]
+            test_set_y = data.loc[test_index, self.Y_col]
+        else:
+            # Train set
+            valid_set_x = data[self.X_col]
+            valid_set_y = data[self.Y_col]
+            # Test set
+            test_set_x = test_set[self.X_col]
+            test_set_y = test_set[self.Y_col]
+        
         # Set data to theano
+        # Train set
         valid_set_x = theano.shared(np.array(valid_set_x, dtype=theano.config.floatX))
         valid_set_y = theano.shared(np.array(valid_set_y, dtype=theano.config.floatX))
-        
         # Test set
-        test_set_x = data.loc[test_index, X]
-        test_set_y = data.loc[test_index, Y]
-        # Set data to theano
         test_set_x = theano.shared(np.array(test_set_x, dtype=theano.config.floatX))
         test_set_y = theano.shared(np.array(test_set_y, dtype=theano.config.floatX))
+        self.test_set = test_set_x
 
         index = T.lscalar()  # index to a [mini]batch
         x = T.vector('x')
@@ -206,6 +253,7 @@ class MLP:
 
         # Set cost
         cost = self.cost(x, y) + (self.L1_reg * self._L1()) + (self.L2_reg * self._L2())
+        
 
         gparams = [T.grad(cost, param) for param in self.params]
 
@@ -219,7 +267,6 @@ class MLP:
         done_looping = False
         best_validation_loss = np.inf
         best_iter = 0
-        test_score = 0.
         
         train_model = theano.function(
             inputs=[index],
@@ -233,7 +280,7 @@ class MLP:
         validate_model = theano.function(
             inputs=[index],
             outputs=cost,
-            givens={x: valid_set_x[index], y: valid_set_y[index]}
+            givens={x: test_set_x[index], y: test_set_y[index]}
         )
 
         # early-stopping parameters
@@ -245,21 +292,79 @@ class MLP:
         n_valid_set = valid_set_x.get_value(borrow=True).shape[0]
         n_test_set = test_set_x.get_value(borrow=True).shape[0] 
 
-        while (current_epoch < epochs+1) & (not done_looping):
-            current_epoch += 1
-            minibatch_avg_cost = [train_model(i) for i in range(n_valid_set)]
-            minibatch_avg_cost = np.mean(minibatch_avg_cost)
-            if current_epoch % validation_frequency == 0:
-                validation_losses = [validate_model(i).tolist() for i in range(n_test_set)]
-                validation_losses = np.mean(validation_losses)
-                if validation_losses < best_validation_loss:
-                    if (validation_losses < best_validation_loss * improvement_threshold):
-                        patience = max(patience, current_epoch * patience_increase)
-                    best_validation_loss = validation_losses
-                    best_iter = current_epoch
-                    print('Epoch %i, validation error %f' %(current_epoch, best_validation_loss))
+        # while (current_epoch < epochs+1) & (not done_looping):
+        #     current_epoch += 1
+        #     minibatch_avg_cost = [train_model(i) for i in range(n_valid_set)]
+        #     minibatch_avg_cost = np.mean(minibatch_avg_cost)
+        #     if current_epoch % validation_frequency == 0:
+        #         validation_losses = [validate_model(i).tolist() for i in range(n_test_set)]
+        #         validation_losses = np.mean(validation_losses)
+        #         if validation_losses < best_validation_loss:
+        #             if (validation_losses < best_validation_loss * improvement_threshold):
+        #                 patience = max(patience, current_epoch * patience_increase)
+        #             best_validation_loss = validation_losses
+        #             best_iter = current_epoch
+        #             print('Epoch %i, validation error %f' %(current_epoch, best_validation_loss))
             
-            # Check early stopping
-            if patience <= current_epoch:
-                done_looping = True
+        #     # Check early stopping
+        #     if patience <= current_epoch:
+        #         done_looping = True
+        #         break
+        
+        # Initialize values
+        self.train_losses = []       # Training loss vector to plot
+        self.test_losses = []        # Test loss vector to plot
+        self.best_loss = np.inf # Initial best loss value
+        verif_i = epochs        # First, verify epoch at then end (init only)
+        i = 0
+
+        # Start training
+        while i <= epochs:
+            i += 1
+            # Train
+            output = [train_model(i) for i in range(n_valid_set)]
+            # Evaluate on test set
+            test_out = [validate_model(i).tolist() for i in range(n_test_set)]
+            # Measure accuracy on train and test sets
+            epoch_loss = np.mean([train_model(i) for i in range(n_valid_set)])
+            epoch_loss_test = np.mean([validate_model(i).tolist() for i in range(n_test_set)])
+            # Save to historical performance
+            self.train_losses += [epoch_loss]
+            self.test_losses += [epoch_loss_test]
+            # If we got the best score until now, and patience is not reached
+            if (epoch_loss_test < self.best_loss * improvement_threshold) & (i <= verif_i) & early_stop:
+                # pc.verbose_display(f'New min found for iter {i}', verbose=verbose_all)
+                verif_i = i + patience
+                self.best_loss = epoch_loss_test
+                self.best_iter = i
+                # self.optimal_w = self.w.get_value()
+                # self.optimal_b = self.b.get_value()
+            # if no improvement
+            elif (i <= verif_i):
+                # pc.verbose_display(f'No improvement at iter {i}', verbose=verbose_all)
+                pass
+            else:
+                # pc.verbose_display(f'Stop training. Minimum found after {self.best_iter} iterations', verbose)
                 break
+        
+
+        if plot:
+            # Plot the training and test loss
+            plt.title('MLP train vs. test error through epochs', loc='center')
+            plt.plot(self.train_losses, label='Training loss')
+            plt.plot(self.test_losses, label='Test loss')
+            plt.legend()
+            plt.show()
+    
+
+    def predict(self, new_data, binary=False):
+        """
+        """
+        # Transform input data to be transformed into numpy array format
+        x = new_data[self.X_col].values
+        # Apply feedforward step to the data to get the prediction (apply weights and activations)
+        output = self.forward_prop(x, tensor=False)
+        if binary:
+            return [1. if y[0] > 0.5 else 0. for y in output.reshape((new_data.shape[0], 1))]
+        else:
+            return [y[0] for y in output.reshape((new_data.shape[0], 1))]

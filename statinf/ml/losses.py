@@ -1,8 +1,10 @@
 import numpy as np
-
+import theano.tensor as T
 
 
 def log_stability(x):
+    """
+    """
     if x==0: 
         return 10e-9 
     elif x==1: 
@@ -10,7 +12,7 @@ def log_stability(x):
     else:
         return x
 
-def binary_cross_entropy(y_true, y_pred, verbose=False):
+def binary_cross_entropy(y_true, y_pred, verbose=False, tensor=False):
     """Computes the Mean Squared Error
 
     Args:
@@ -27,12 +29,17 @@ def binary_cross_entropy(y_true, y_pred, verbose=False):
     References:
         * Friedman, J., Hastie, T. and Tibshirani, R., 2001. The elements of statistical learning. Ch. 4, pp. 120.
     """
-    m = len(y_true) #.shape[1]
-    pred = np.array([log_stability(a) for a in np.reshape(y_pred, (np.product(y_pred.shape),))])
-    true = np.array([log_stability(a) for a in np.reshape(y_true, (np.product(y_true.shape),))]) # np.array(np.reshape(y_true, (np.product(y_true.shape),)))
-    # print(pred)
-    # print(true)
-    loss = (-1/m) * (np.dot(true.T, np.log(pred)) + np.dot(1-true.T, np.log(1-pred)))
+    if tensor:
+        loss = -y_true * T.log(y_pred) - (1-y_true) * T.log(1-y_pred)
+    else:
+        m = len(y_true) #.shape[1]
+        pred_ls = [float(y) for y in y_pred]
+        y_ls = [float(y) for y in y_true]
+        pred = np.array([log_stability(a) for a in pred_ls]) #np.reshape(pred_ls, (np.product(pred_ls.shape),))])
+        true = np.array([log_stability(a) for a in y_ls]) # np.reshape(y_ls, (np.product(y_ls.shape),))]) # np.array(np.reshape(y_true, (np.product(y_true.shape),)))
+        # print(pred)
+        # print(true)
+        loss = (-1/m) * (np.dot(true.T, np.log(pred)) + np.dot(1-true.T, np.log(1-pred)))
     # print(loss)
     return loss
 
@@ -61,3 +68,8 @@ def mean_squared_error(y_true, y_pred, root=False, verbose=False):
         return loss ** (1/2)
     else:
         return loss
+
+def binary_accuracy(y_true, y_pred):
+    """
+    """
+    return (y_true == y_pred).mean()

@@ -1,5 +1,6 @@
 import numpy as np
 
+from .glm_test import GLM
 
 """
 Based on tutorial to be edited
