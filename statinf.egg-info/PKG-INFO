@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: statinf
-Version: 1.0.8
+Version: 1.0.9
 Summary: A library for statistics and causal inference
 Home-page: https://github.com/florianfelice/statinf
 Author: Florian Felice
@@ -59,7 +59,7 @@ Description: # STATINF
         
         The logistic regression can be used for binary classification where ![Y](https://latex.codecogs.com/svg.latex?\Large&space;Y) follows a Bernoulli distribution. With ![X](https://latex.codecogs.com/svg.latex?\Large&space;X) being the matrix of regressors, we have:
         
-        ![(X'X)^{-1}X'Y](https://latex.codecogs.com/svg.latex?\Large&space;p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}})
+        ![p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}}](https://latex.codecogs.com/svg.latex?\Large&space;p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}})
         
         
         We then implement the regression with:

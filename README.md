@@ -51,7 +51,7 @@ Variables  Coefficients  Standard Errors    t values  Probabilites
 
 The logistic regression can be used for binary classification where ![Y](https://latex.codecogs.com/svg.latex?\Large&space;Y) follows a Bernoulli distribution. With ![X](https://latex.codecogs.com/svg.latex?\Large&space;X) being the matrix of regressors, we have:
 
-![(X'X)^{-1}X'Y](https://latex.codecogs.com/svg.latex?\Large&space;p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}})
+![p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}}](https://latex.codecogs.com/svg.latex?\Large&space;p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}})
 
 
 We then implement the regression with:
