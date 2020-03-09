@@ -1,65 +1,108 @@
 import numpy as np
 
+from ..ml.initilizations import init_params
+from ..ml.activations import sigmoid
 from .glm_test import GLM
 
-"""
-Based on tutorial to be edited
-- https://medium.com/@martinpella/logistic-regression-from-scratch-in-python-124c5636b8ac
-- https://www.kaggle.com/jeppbautista/logistic-regression-from-scratch-python
-"""
 
+class glm:
+    ''' 
+    [C. Cameron & P.k. Trivedi] - Microeconometrics methods and applications - 2005
+    '''
+    def __init__(self, formula, data, fit_intercept=False, initializer='zeros'):
+        self.data             = data # Pandas DataFrame
+        # Parse the formula
+        self.no_space_formula = formula.replace(' ', '')
+        self.fit_intercept    = fit_intercept
+        self.Y_col            = self.no_space_formula.split('~')[0]
+        self.X_col            = self.no_space_formula.split('~')[1].split('+')
+        self.X                = data[self.X_col].to_numpy()
+        self.Y                = data[self.Y_col].to_numpy()
+        self.log_likelihood   = []
+        self.gradients        = []
+        self.coefs_hist       = []
+        self.hessian_hist     = []
+        self.jacobian_hist    = []
 
-## TODO: check loss function
-## TODO: check gradient descent methodology
-## TODO: check stop iterations once convergence
-## TODO: data generator
-## TODO: summary
-## TODO: add dask
-
-class LogisticRegression:
-    def __init__(self, learning_rate=0.01, max_iter=1000, fit_intercept=True, verbose=False):
-        self.lr = lr
-        self.num_iter = num_iter
-        self.fit_intercept = fit_intercept
-    
-    def __add_intercept(self, X):
-        intercept = np.ones((X.shape[0], 1))
-        return np.concatenate((intercept, X), axis=1)
-    
-    def __sigmoid(self, z):
-        return 1 / (1 + np.exp(-z))
-
-    def __loss(self, h, y):
-        return (-y * np.log(h) - (1 - y) * np.log(1 - h)).mean()
-
-    def log_likelihood(x, y, weights):
-        z = np.dot(x, weights)
-        ll = np.sum( y*z - np.log(1 + np.exp(z)) )
-        return ll
-    
-    def fit(self, X, y):
+        # Need to fit intercept?
         if self.fit_intercept:
-            X = self.__add_intercept(X)
+            self.X.insert(1, 'intercept', 1)
+        # Initialize parameters
+        self.beta = init_params(rows=len(self.X_col), cols=1, method=initializer, isTheano=False)
+
+
+    def _explain(self, beta):
+        '''
+        1rst step build the linear combination
+        '''
+        Xb   = self.X.dot(np.array(beta).T)
+        return Xb
+
+    def _prob(self, X):
+        ''' 
+        Prob
+        '''
+        prob = sigmoid(X.dot(self.beta))
+        # prob = np.array([(1/(1+np.exp(-x))) for x in self._explain(beta)])
+        return prob
         
-        # weights initialization
-        self.theta = np.zeros(X.shape[1])
-        
-        for i in range(self.num_iter):
-            z = np.dot(X, self.theta)
-            h = self.__sigmoid(z)
-            gradient = np.dot(X.T, (h - y)) / y.size
-            self.theta -= self.lr * gradient
+    def _log_likelihood(self, X=None, Y=None):
+        '''
+        Compute Log-Likelihood 
+        '''
+        X_data = self.X if X is None else X
+        Y_data = self.Y if Y is None else Y
+
+        # Individual log-likelihood
+        log_likelihood_id = np.array(Y_data * np.log(self._prob(X_data)) + (1 - Y_data) * np.log(1-self._prob(X_data)))
+        # Overall log-likelihood
+        log_likelihood = log_likelihood_id.sum()
+        return log_likelihood
+
+
+    def _jacobian(self):
+        '''
+        Gradient (Overall) not the score function 
+        '''
+        gradient = np.array(self.Y - self._prob(self.X)).dot(self.X) # gradient of the likelihood
+        return gradient
+
+    def _hessian(self):
+        '''
+        Hessian -- Fisher Information 
+        '''
+        hessian = np.array((self._prob(self.X).dot(1 - self._prob(self.X)).sum()) * self.X.T.dot(self.X)) #! Wrong formula
+        return hessian
+
+    def variance(self):
+        '''
+        Fisher Information
+        '''
+        variance = np.linalg.inv(self._hessian())
+        return np.array(variance)
+
+    def fit(self, max_it=10, improvement_threshold=0.995, keep_hist=True):
+        it = 0
+        diff = np.inf
+        old_log_like = np.inf
+    
+        while (it < max_it) and (np.abs(diff) > 1-improvement_threshold):
+            it           += 1
+            log_like      = self._log_likelihood()
+            gradient      = self._jacobian()
+            variation     = self.variance().dot(gradient)
+            self.beta    -= variation.T
+            diff          = old_log_like - log_like
+            old_log_like  = log_like
+
+            if keep_hist:
+                self.log_likelihood += [log_like]
+                self.gradients      += [gradient]
             
-            if(self.verbose == True and i % 10000 == 0):
-                z = np.dot(X, self.theta)
-                h = self.__sigmoid(z)
-                print(f'loss: {self.__loss(h, y)} \t')
-    
-    def predict_prob(self, X):
-        if self.fit_intercept:
-            X = self.__add_intercept(X)
-        return self.__sigmoid(np.dot(X, self.theta))
-    
-    def predict(self, X, threshold):
-        return self.predict_prob(X) >= threshold
+        return print(it)
 
+    def predict(self, max_it=10):
+        beta         = self._fit(max_it)
+        self.predict = [1 if x > 0.5 else 0 for x in self._prob(beta)]
+        return print(f'''{self.predict}''')
+    

@@ -32,7 +32,7 @@ class OLS:
     X = []
     Y = []
     
-    def __init__(self, formula, data, fit_intercept = True):
+    def __init__(self, formula, data, fit_intercept=True):
         super(OLS, self).__init__()
         # Parse formula
         self.no_space_formula = formula.replace(' ', '')

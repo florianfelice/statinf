@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 from .initilizations import init_params
 from .activations import tanh, sigmoid, relu, softplus
+from .losses import mean_squared_error, binary_cross_entropy
 
 """
 DeepLearning website - Yoshua Bengio:
@@ -124,7 +125,9 @@ class MLP:
         output = self.forward_prop(x)
         # Compute loss
         if self.loss.lower() in ['mse', 'mean_squared_error']:
-            _cost = ((output - y) ** 2).sum()
+            _cost = mean_squared_error(y_true=y, y_pred=output) # ((output - y) ** 2).sum()
+        elif self.loss.lower() in ['binary_cross_entropy', 'bce']:
+            _cost = binary_cross_entropy(y_true=y, y_pred=output)
         else:
             raise ValueError('Loss function is not valid.')
         self._cost += [_cost]
@@ -161,7 +164,7 @@ class MLP:
             weights = {}
             for i in range(len(self._layers)):
                 if par == 0:
-                    weights.update({f'weights{i}': self._layers[i].params[0].get_value()})
+                    weights.update({f'weights {i}': self._layers[i].params[0].get_value()})
                 elif par == 1:
                     weights.update({f'bias {i}': self._layers[i].params[1].get_value()})
                 else:
@@ -179,7 +182,7 @@ class MLP:
         
         return weights
  
-    def train(self, data, X, Y='Y', epochs=100, batch_size=1, training_size=0.8, test_set=None, learning_rate=0.01, L1_reg=0., L2_reg=0., early_stop=True, restore_weights=True, verbose=False, plot=False):
+    def train(self, data, X, Y='Y', epochs=100, batch_size=1, training_size=0.8, test_set=None, learning_rate=0.01, L1_reg=0., L2_reg=0., early_stop=True, patience=100, improvement_threshold=0.995, restore_weights=True, verbose=False, plot=False):
         """
         Train the Neural Network.
         
@@ -197,6 +200,10 @@ class MLP:
             Size of each batch to be trained (defaults 1).
         learning_rate: float
             Learning rate for gradient descent (defaults 0.01).
+        patience: int
+            Look as this many examples regardless (defaults 100).
+        improvement_threshold: float
+            Relative improvement to be considered as significant (defaults 0.995).
         L1_reg: float
             L1 regularization rate (defaults 0.0)
         L2_reg: float
@@ -285,9 +292,9 @@ class MLP:
 
         # early-stopping parameters
         patience = 10000  # look as this many examples regardless
-        patience_increase = 2  # wait this much longer when a new best is found
+        # patience_increase = 2  # wait this much longer when a new best is found
         improvement_threshold = 0.995  # a relative improvement of this much is considered significant
-        validation_frequency = 10
+        # validation_frequency = 10
         
         n_valid_set = valid_set_x.get_value(borrow=True).shape[0]
         n_test_set = test_set_x.get_value(borrow=True).shape[0] 

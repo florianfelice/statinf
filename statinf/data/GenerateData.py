@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', binary=False, seed=None):
+def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', binary=False, seed=None, error_mean=0., error_std=1.):
     """
     Generate a synthetic dataset for linear or binary data.
 
@@ -25,7 +25,7 @@ def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', bi
     for index, row in params.iterrows():
         x += [rdm.normal(row.coeff, row.std_dev, n)]
     X = np.array(x)
-    e = rdm.normal(loc=0., scale=1., size=n)
+    e = rdm.normal(loc=error_mean, scale=error_std, size=n)
 
     # Since x is a n*p matrix, and coefficients is a p*1 matrix
     # we can use matrix multiplication to get the value of y for each
