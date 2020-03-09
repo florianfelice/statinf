@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', binary=False, seed=None, error_mean=0., error_std=1.):
+def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', binary=False, seed=None, **kwargs):
     """
     Generate a synthetic dataset for linear or binary data.
 
@@ -14,7 +14,7 @@ def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', bi
     binary (bool): Is the output data (y) binary (defaults False).
     """
 
-    rdm = np.random.RandomState(seed) if seed is not None else np.random
+    rdm = np.random.RandomState(seed) if seed else np.random
     # We calculate the number of predictors, and create a coefficient matrix
     # With `p` rows and 1 column, for matrix multiplication
     p = len(coeffs)
@@ -23,9 +23,12 @@ def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', bi
     # Similar as before, but with `n` rows and `p` columns this time
     x = []
     for index, row in params.iterrows():
-        x += [rdm.normal(row.coeff, row.std_dev, n)]
+        if distribution.lower() == 'normal':
+            x += [rdm.normal(size=n, **kwargs)]
+        if distribution.lower() == 'uniform':
+            x += [rdm.uniform(size=n, **kwargs)]
     X = np.array(x)
-    e = rdm.normal(loc=error_mean, scale=error_std, size=n)
+    e = rdm.normal(loc=0., scale=1., size=n)
 
     # Since x is a n*p matrix, and coefficients is a p*1 matrix
     # we can use matrix multiplication to get the value of y for each

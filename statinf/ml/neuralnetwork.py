@@ -5,6 +5,8 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
+import pycof as pc
+
 from .initilizations import init_params
 from .activations import tanh, sigmoid, relu, softplus
 from .losses import mean_squared_error, binary_cross_entropy
@@ -86,6 +88,8 @@ class MLP:
         self.L1 = 0.
         self.L2 = 0.
         self._cost = []
+        self.optimal_w = []
+        self.optimal_b = []
 
     def _L1(self):
         
@@ -164,25 +168,25 @@ class MLP:
             weights = {}
             for i in range(len(self._layers)):
                 if par == 0:
-                    weights.update({f'weights {i}': self._layers[i].params[0].get_value()})
+                    weights.update({f'weights {i}': self._layers[i].W.get_value()})
                 elif par == 1:
-                    weights.update({f'bias {i}': self._layers[i].params[1].get_value()})
+                    weights.update({f'bias {i}': self._layers[i].b.get_value()})
                 else:
-                    weights.update({f'weights {i}': self._layers[i].params[0].get_value(), f'bias {i}': self._layers[i].params[1].get_value()})
+                    weights.update({f'weights {i}': self._layers[i].W.get_value(), f'bias {i}': self._layers[i].b.get_value()})
         elif layer in range(len(self._layers)):
             # If user wants only 1 specific layer,
             if par == 2:
                 # we return a dict for all params
-                weights = {'weights': self._layers[layer].params[0].get_value(), 'bias': self._layers[layer].params[1].get_value()}
+                weights = {'weights': self._layers[layer].Z.get_value(), 'bias': self._layers[layer].b.get_value()}
             else:
                 # or an array for 1 single param
-                weights = self._layers[layer].params[0].get_value()
+                weights = self._layers[layer].Z.get_value()
         else:
             raise ValueError(f'Layer is incorrect. Please chose either "all" or layer <= {len(self._layers) - 1}. Got layer = {layer}')
         
         return weights
  
-    def train(self, data, X, Y='Y', epochs=100, batch_size=1, training_size=0.8, test_set=None, learning_rate=0.01, L1_reg=0., L2_reg=0., early_stop=True, patience=100, improvement_threshold=0.995, restore_weights=True, verbose=False, plot=False):
+    def train(self, data, X, Y='Y', epochs=100, batch_size=1, training_size=0.8, test_set=None, learning_rate=0.01, L1_reg=0., L2_reg=0., early_stop=True, patience=10, improvement_threshold=0.995, restore_weights=True, verbose=True, verbose_all=False, plot=False):
         """
         Train the Neural Network.
         
@@ -291,9 +295,7 @@ class MLP:
         )
 
         # early-stopping parameters
-        patience = 10000  # look as this many examples regardless
         # patience_increase = 2  # wait this much longer when a new best is found
-        improvement_threshold = 0.995  # a relative improvement of this much is considered significant
         # validation_frequency = 10
         
         n_valid_set = valid_set_x.get_value(borrow=True).shape[0]
@@ -340,20 +342,27 @@ class MLP:
             self.test_losses += [epoch_loss_test]
             # If we got the best score until now, and patience is not reached
             if (epoch_loss_test < self.best_loss * improvement_threshold) & (i <= verif_i) & early_stop:
-                # pc.verbose_display(f'New min found for iter {i}', verbose=verbose_all)
+                pc.verbose_display(f'New min found for iter {i}', verbose=verbose_all)
                 verif_i = i + patience
                 self.best_loss = epoch_loss_test
                 self.best_iter = i
                 # self.optimal_w = self.w.get_value()
                 # self.optimal_b = self.b.get_value()
+                for layer in self._layers:
+                    layer.optimal_w = layer.W.get_value()
+                    layer.optimal_b = layer.b.get_value()
             # if no improvement
-            elif (i <= verif_i):
+            elif (i < verif_i):
                 # pc.verbose_display(f'No improvement at iter {i}', verbose=verbose_all)
                 pass
             else:
-                # pc.verbose_display(f'Stop training. Minimum found after {self.best_iter} iterations', verbose)
+                pc.verbose_display(f'Stop training. Minimum found after {self.best_iter} iterations', verbose=verbose)
+                if restore_weights:
+                    for layer in self._layers:
+                        layer.W = theano.shared(value=layer.optimal_w, name='W', borrow=True)
+                        layer.b = theano.shared(value=layer.optimal_b, name='b', borrow=True)
+                        layer.params = [layer.W, layer.b]
                 break
-        
 
         if plot:
             # Plot the training and test loss
