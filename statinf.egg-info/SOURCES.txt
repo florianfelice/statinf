@@ -2,7 +2,6 @@ README.md
 setup.py
 setup_new.py
 statinf/__init__.py
-statinf/tests.py
 statinf.egg-info/PKG-INFO
 statinf.egg-info/SOURCES.txt
 statinf.egg-info/dependency_links.txt
@@ -16,6 +15,7 @@ statinf/ml/initilizations.py
 statinf/ml/losses.py
 statinf/ml/neuralnetwork.py
 statinf/ml/neuralnetwork_old.py
+statinf/ml/optimizers.py
 statinf/regressions/LinearModels.py
 statinf/regressions/__init__.py
 statinf/regressions/glm.py
