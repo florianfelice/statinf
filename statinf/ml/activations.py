@@ -41,10 +41,8 @@ def relu(x):
     Returns:
         float: Hyperbloic tangent of x
     """
-    if x > 0.:
-        return x
-    else:
-        return 0
+    return np.maximum(0, x)
+    
 
 def softplus(x):
     """

@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 
 import pycof as pc
 
+from .optimizers import Adam, AdaGrad, AdaDelta
+from .optimizers import SGD, MomentumSGD
+from .optimizers import RMSprop
 from .initilizations import init_params
 from .activations import tanh, sigmoid, relu, softplus
 from .losses import mean_squared_error, binary_cross_entropy
@@ -34,7 +37,18 @@ activations = {None: None,
                 'relu': relu,
                 'softplus': softplus,
                 }
-        
+
+optimizers = {'sgd': SGD,
+                'stochastic_gradient_descent': SGD,
+                'momentum': MomentumSGD,
+                'momentumsgd': MomentumSGD,
+                'adam': Adam,
+                'adagrad': AdaGrad,
+                'adadelta': AdaDelta,
+                'rmsprop': RMSprop,
+                }
+
+
 class Layer(object):
     def __init__(self, n_in, n_out, W=None, b=None, activation=None, seed=None, init_weights='xavier', init_bias='zeros'):
       
@@ -80,9 +94,9 @@ class Layer(object):
         return self.output
 
 class MLP:
-    def __init__(self, loss='MSE', optimizer='sgd', random=None):
+    def __init__(self, loss='MSE', optimizer='SGD', random=None):
         self.loss = loss
-        self.optimizer = optimizer
+        self.optimizer = str(optimizer).lower()
         self._layers = []
         self.params = []
         self.L1 = 0.
@@ -265,13 +279,24 @@ class MLP:
         # Set cost
         cost = self.cost(x, y) + (self.L1_reg * self._L1()) + (self.L2_reg * self._L2())
         
+        ## Define update with optimizer
+        try:
+            self.updates = optimizers[self.optimizer](params=self.params).updates(cost)
+        except:
+            posible_opt = "', '".join([i for i in optimizers.keys()])
+            raise ValueError(f"Optimizer not value. Please make sure you choose in '{posible_opt}'. Got '{self.optimizer}'.")
+        # self.optimize = self.optimizer(params=self.params)
+        
+        # """definition for optimizing update"""
+        # self.updates = self.optimize.updates(cost)
+        
+        # Old logic
+        # gparams = [T.grad(cost, param) for param in self.params]
 
-        gparams = [T.grad(cost, param) for param in self.params]
-
-        if self.optimizer.lower() in ['sgd', 'stochastic_gradient_descent']:
-            updates = [(param, param - self.learning_rate * gparam) for param, gparam in zip(self.params, gparams)]
-        else:
-            raise ValueError('Optimizer not valid. Please use "sdg"')
+        # if self.optimizer.lower() in ['sgd', 'stochastic_gradient_descent']:
+        #     updates = sgd(params=self.params, gparams=gparams, self=self)
+        # else:
+        #     raise ValueError('Optimizer not valid. Please use "sdg"')
         
         # Initialize variables for training
         current_epoch = 0
@@ -282,7 +307,7 @@ class MLP:
         train_model = theano.function(
             inputs=[index],
             outputs=cost,
-            updates=updates,
+            updates=self.updates,
             givens={x: valid_set_x[index], y: valid_set_y[index]}
         )
 
