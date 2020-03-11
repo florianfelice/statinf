@@ -1,13 +1,12 @@
 import theano
 import theano.tensor as T
-import pandas as pd
 import numpy as np
 import random
 import matplotlib.pyplot as plt
 
 import pycof as pc
 
-from .optimizers import Adam, AdaGrad, AdaDelta
+from .optimizers import Adam, AdaGrad, AdaMax
 from .optimizers import SGD, MomentumSGD
 from .optimizers import RMSprop
 from .initilizations import init_params
@@ -44,7 +43,7 @@ optimizers = {'sgd': SGD,
                 'momentumsgd': MomentumSGD,
                 'adam': Adam,
                 'adagrad': AdaGrad,
-                'adadelta': AdaDelta,
+                'adamax': AdaMax,
                 'rmsprop': RMSprop,
                 }
 
@@ -72,13 +71,11 @@ class Layer(object):
         elif b.shape == (n_in, n_out):
             raise ValueError(f'Weights dimension does not match. Dimension for b should be {(1, n_out)} and got {b.shape}.')
         
-        # Share parameters with theano
-        W = theano.shared(value=W_values, name='W', borrow=True)
-        b = theano.shared(value=b_values, name='b', borrow=True)
-
-        # Store parameters in the class
-        self.W = W
-        self.b = b
+        # Store parameters in the class as shared parameters with theano
+        self.W = theano.shared(value=W_values, name='W', borrow=True)
+        self.b = theano.shared(value=b_values, name='b', borrow=True)
+        self.optimal_w = W_values
+        self.optimal_b = b_values
         
         # Parameters of the model
         self.params = [self.W, self.b]
@@ -102,8 +99,6 @@ class MLP:
         self.L1 = 0.
         self.L2 = 0.
         self._cost = []
-        self.optimal_w = []
-        self.optimal_b = []
 
     def _L1(self):
         
@@ -247,23 +242,23 @@ class MLP:
             train_index = random.sample(data_idx, int(self.data_size * training_size))
             test_index = [i for i in data_idx if i not in train_index]
             # Train set
-            valid_set_x = data.loc[train_index, self.X_col]
-            valid_set_y = data.loc[train_index, self.Y_col]
+            train_set_x = data.loc[train_index, self.X_col]
+            train_set_y = data.loc[train_index, self.Y_col]
             # Test set
             test_set_x = data.loc[test_index, self.X_col]
             test_set_y = data.loc[test_index, self.Y_col]
         else:
             # Train set
-            valid_set_x = data[self.X_col]
-            valid_set_y = data[self.Y_col]
+            train_set_x = data[self.X_col]
+            train_set_y = data[self.Y_col]
             # Test set
             test_set_x = test_set[self.X_col]
             test_set_y = test_set[self.Y_col]
         
         # Set data to theano
         # Train set
-        valid_set_x = theano.shared(np.array(valid_set_x, dtype=theano.config.floatX))
-        valid_set_y = theano.shared(np.array(valid_set_y, dtype=theano.config.floatX))
+        train_set_x = theano.shared(np.array(train_set_x, dtype=theano.config.floatX))
+        train_set_y = theano.shared(np.array(train_set_y, dtype=theano.config.floatX))
         # Test set
         test_set_x = theano.shared(np.array(test_set_x, dtype=theano.config.floatX))
         test_set_y = theano.shared(np.array(test_set_y, dtype=theano.config.floatX))
@@ -281,74 +276,34 @@ class MLP:
         
         ## Define update with optimizer
         try:
-            self.updates = optimizers[self.optimizer](params=self.params).updates(cost)
-        except:
+            self.updates = optimizers[self.optimizer](params=self.params, learning_rate=self.learning_rate).updates(cost)
+        except BaseException:
             posible_opt = "', '".join([i for i in optimizers.keys()])
             raise ValueError(f"Optimizer not value. Please make sure you choose in '{posible_opt}'. Got '{self.optimizer}'.")
-        # self.optimize = self.optimizer(params=self.params)
-        
-        # """definition for optimizing update"""
-        # self.updates = self.optimize.updates(cost)
-        
-        # Old logic
-        # gparams = [T.grad(cost, param) for param in self.params]
-
-        # if self.optimizer.lower() in ['sgd', 'stochastic_gradient_descent']:
-        #     updates = sgd(params=self.params, gparams=gparams, self=self)
-        # else:
-        #     raise ValueError('Optimizer not valid. Please use "sdg"')
-        
-        # Initialize variables for training
-        current_epoch = 0
-        done_looping = False
-        best_validation_loss = np.inf
-        best_iter = 0
-        
+ 
+        # Define Theano function for training step
         train_model = theano.function(
             inputs=[index],
             outputs=cost,
             updates=self.updates,
-            givens={x: valid_set_x[index], y: valid_set_y[index]}
+            givens={x: train_set_x[index], y: train_set_y[index]}
         )
-
-        # theano.function(inputs=[x,y], outputs=[prediction, xent], updates=[[w, w-0.01*gw], [b, b-0.01*gb]], name = "train")
         
+        # Define Theano function for validation step
         validate_model = theano.function(
             inputs=[index],
             outputs=cost,
             givens={x: test_set_x[index], y: test_set_y[index]}
         )
-
-        # early-stopping parameters
-        # patience_increase = 2  # wait this much longer when a new best is found
-        # validation_frequency = 10
-        
-        n_valid_set = valid_set_x.get_value(borrow=True).shape[0]
-        n_test_set = test_set_x.get_value(borrow=True).shape[0] 
-
-        # while (current_epoch < epochs+1) & (not done_looping):
-        #     current_epoch += 1
-        #     minibatch_avg_cost = [train_model(i) for i in range(n_valid_set)]
-        #     minibatch_avg_cost = np.mean(minibatch_avg_cost)
-        #     if current_epoch % validation_frequency == 0:
-        #         validation_losses = [validate_model(i).tolist() for i in range(n_test_set)]
-        #         validation_losses = np.mean(validation_losses)
-        #         if validation_losses < best_validation_loss:
-        #             if (validation_losses < best_validation_loss * improvement_threshold):
-        #                 patience = max(patience, current_epoch * patience_increase)
-        #             best_validation_loss = validation_losses
-        #             best_iter = current_epoch
-        #             print('Epoch %i, validation error %f' %(current_epoch, best_validation_loss))
-            
-        #     # Check early stopping
-        #     if patience <= current_epoch:
-        #         done_looping = True
-        #         break
+        # Define length of test
+        n_train_set = train_set_x.get_value(borrow=True).shape[0]
+        n_test_set = test_set_x.get_value(borrow=True).shape[0]
         
         # Initialize values
         self.train_losses = []       # Training loss vector to plot
         self.test_losses = []        # Test loss vector to plot
         self.best_loss = np.inf # Initial best loss value
+        self.best_iter = 0
         verif_i = epochs        # First, verify epoch at then end (init only)
         i = 0
 
@@ -356,11 +311,11 @@ class MLP:
         while i <= epochs:
             i += 1
             # Train
-            output = [train_model(i) for i in range(n_valid_set)]
-            # Evaluate on test set
-            test_out = [validate_model(i).tolist() for i in range(n_test_set)]
+            # output = [train_model(i) for i in range(n_train_set)]
+            # # Evaluate on test set
+            # test_out = [validate_model(i).tolist() for i in range(n_test_set)]
             # Measure accuracy on train and test sets
-            epoch_loss = np.mean([train_model(i) for i in range(n_valid_set)])
+            epoch_loss = np.mean([train_model(i) for i in range(n_train_set)])
             epoch_loss_test = np.mean([validate_model(i).tolist() for i in range(n_test_set)])
             # Save to historical performance
             self.train_losses += [epoch_loss]
