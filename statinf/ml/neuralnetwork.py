@@ -91,9 +91,8 @@ class Layer(object):
         return self.output
 
 class MLP:
-    def __init__(self, loss='MSE', optimizer='SGD', random=None):
-        self.loss = loss
-        self.optimizer = str(optimizer).lower()
+    def __init__(self, loss='MSE', random=None):
+        self.loss = losss
         self._layers = []
         self.params = []
         self.L1 = 0.
@@ -195,7 +194,7 @@ class MLP:
         
         return weights
  
-    def train(self, data, X, Y='Y', epochs=100, batch_size=1, training_size=0.8, test_set=None, learning_rate=0.01, L1_reg=0., L2_reg=0., early_stop=True, patience=10, improvement_threshold=0.995, restore_weights=True, verbose=True, verbose_all=False, plot=False):
+    def train(self, data, X, Y='Y', epochs=100, optimizer='SGD', batch_size=1, training_size=0.8, test_set=None, learning_rate=0.01, L1_reg=0., L2_reg=0., early_stop=True, patience=10, improvement_threshold=0.995, restore_weights=True, verbose=True, verbose_all=False, plot=False):
         """
         Train the Neural Network.
         
@@ -209,6 +208,8 @@ class MLP:
             Variable to predict (defaults 'Y').
         epochs: int
             Number of epochs to train (defaults 100).
+        optimizer: str
+            Algortihm to use to optimize the loss function (defaults 'SGD')
         batch_size: int
             Size of each batch to be trained (defaults 1).
         learning_rate: float
@@ -233,6 +234,7 @@ class MLP:
         self.L2_reg = L2_reg
         self.X_col = X
         self.Y_col = Y
+        self.optimizer = str(optimizer).lower()
 
         # Get indexes
         self.data_size = data.shape[0]
@@ -310,12 +312,9 @@ class MLP:
         # Start training
         while i <= epochs:
             i += 1
-            # Train
-            # output = [train_model(i) for i in range(n_train_set)]
-            # # Evaluate on test set
-            # test_out = [validate_model(i).tolist() for i in range(n_test_set)]
-            # Measure accuracy on train and test sets
+            # Measure accuracy on train set
             epoch_loss = np.mean([train_model(i) for i in range(n_train_set)])
+            # Evaluate on test set
             epoch_loss_test = np.mean([validate_model(i).tolist() for i in range(n_test_set)])
             # Save to historical performance
             self.train_losses += [epoch_loss]

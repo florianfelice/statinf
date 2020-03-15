@@ -2,10 +2,10 @@ import numpy as np
 
 from ..ml.initilizations import init_params
 from ..ml.activations import sigmoid
-from .glm_test import GLM
+# from .glm_test import GLM
 
 
-class glm:
+class GLM:
     ''' 
     [C. Cameron & P.k. Trivedi] - Microeconometrics methods and applications - 2005
     '''

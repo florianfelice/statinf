@@ -66,3 +66,21 @@ def binary_accuracy(y_true, y_pred):
     """
     """
     return (y_true == y_pred).mean()
+
+
+# MAPE formula
+def mape(y_true, y_pred):
+    """Computes the Mean Absolute Percentage Error.
+
+    Args:
+        y (list): Real values on which to compare.
+        yhat (list): Predicted values.
+
+    Returns:
+        float: MAPE.
+    """
+    y = np.array(y_true)
+    yhat = np.array(y_pred)
+    m = len(y)
+    mape = (100/m) * sum(np.abs(y-yhat))/sum(y)
+    return mape
