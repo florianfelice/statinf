@@ -92,7 +92,7 @@ class Layer(object):
 
 class MLP:
     def __init__(self, loss='MSE', random=None):
-        self.loss = losss
+        self.loss = loss
         self._layers = []
         self.params = []
         self.L1 = 0.
