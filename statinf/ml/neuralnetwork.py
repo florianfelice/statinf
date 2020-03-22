@@ -352,7 +352,7 @@ class MLP:
             plt.show()
     
 
-    def predict(self, new_data, binary=False):
+    def predict(self, new_data, binary=False, threshold=0.5):
         """
         """
         # Transform input data to be transformed into numpy array format
@@ -360,6 +360,6 @@ class MLP:
         # Apply feedforward step to the data to get the prediction (apply weights and activations)
         output = self.forward_prop(x, tensor=False)
         if binary:
-            return [1. if y[0] > 0.5 else 0. for y in output.reshape((new_data.shape[0], 1))]
+            return [1. if y[0] > threshold else 0. for y in output.reshape((new_data.shape[0], 1))]
         else:
             return [y[0] for y in output.reshape((new_data.shape[0], 1))]
