@@ -15,19 +15,26 @@ def log_stability(x):
 def binary_cross_entropy(y_true, y_pred, verbose=False, tensor=False):
     """Computes the Mean Squared Error
 
-    Args:
-        y_true (list): Real values on which to compare.
-        y_pred (list): Predicted values.
-        root (bool): Return Root Mean Squared Error (RMSE) or simple MSE.
+    Parameters
+    -----------
+    y_true: list
+        Real values on which to compare.
+    y_pred: list
+        Predicted values.
+    root: bool
+        Return Root Mean Squared Error (RMSE) or simple MSE.
 
-    Formula:
-        $loss = - y_{i} \log \left[ G(\mathbf{x_i} \beta) \right] - (1 - y_{i}) \log \left[1 - G(\mathbf{x_i} \beta) \right]$
+    Notes
+    -----
+    :math:`loss = - y_{i} \\log \\left[ G(\\mathbf{x_i} \\beta) \\right] - (1 - y_{i}) \\log \\left[1 - G(\\mathbf{x_i} \\beta) \\right]`
 
-    Returns:
-        float: Binary Cross Entropy.
+    Returns
+    -------
+    float: Binary Cross Entropy.
     
-    References:
-        * Friedman, J., Hastie, T. and Tibshirani, R., 2001. The elements of statistical learning. Ch. 4, pp. 120.
+    References
+    -----------
+    * Friedman, J., Hastie, T. and Tibshirani, R., 2001. The elements of statistical learning. Ch. 4, pp. 120.
     """
     if tensor:
         loss = -y_true * T.log(y_pred) - (1-y_true) * T.log(1-y_pred)
@@ -41,19 +48,26 @@ def binary_cross_entropy(y_true, y_pred, verbose=False, tensor=False):
 def mean_squared_error(y_true, y_pred, root=False, verbose=False):
     """Computes the Mean Squared Error
 
-    Args:
-        y_true (list): Real values on which to compare.
-        y_pred (list): Predicted values.
-        root (bool): Return Root Mean Squared Error (RMSE) or simple MSE.
+    Parameters
+    -----------
+    y_true: list
+        Real values on which to compare.
+    y_pred: list
+        Predicted values.
+    root: bool
+        Return Root Mean Squared Error (RMSE) or simple MSE.
 
-    Formula:
-        $loss = \dfrac{1}{m} \times \sum_{i=1}^{m} (y_i - \hat{y}_i)^2$
+    Notes
+    -----
+    :math:`loss = \\dfrac{1}{m} \\times \\sum_{i=1}^{m} (y_i - \\hat{y}_i)^2`
 
-    Returns:
-        float: MSE or RMSE.
+    Returns
+    -------
+    float: MSE or RMSE.
     
-    References:
-        * Friedman, J., Hastie, T. and Tibshirani, R., 2001. The elements of statistical learning. Ch. 2, pp. 24.
+    References
+    -----------
+    * Friedman, J., Hastie, T. and Tibshirani, R., 2001. The elements of statistical learning. Ch. 2, pp. 24.
     """
     loss = ((y_pred - y_true).sum())**2
     if root:
@@ -72,12 +86,16 @@ def binary_accuracy(y_true, y_pred):
 def mape(y_true, y_pred):
     """Computes the Mean Absolute Percentage Error.
 
-    Args:
-        y (list): Real values on which to compare.
-        yhat (list): Predicted values.
+    Parameters
+    -----------
+    y: list
+        Real values on which to compare.
+    yhat: list
+        Predicted values.
 
-    Returns:
-        float: MAPE.
+    Returns
+    -------
+    float: MAPE.
     """
     y = np.array(y_true)
     yhat = np.array(y_pred)

@@ -151,10 +151,8 @@ class MLP:
         
         Parameters
         ----------
-        layer: int
-            Layer id from which to fetch the parameters (defaults 'all').
-        param: str
-            What parameter we need to fetch (defaults 'all').
+        layer(int): Layer id from which to fetch the parameters (defaults 'all').
+        param (str): What parameter we need to fetch (defaults 'all').
         
         Returns
         -------

@@ -6,33 +6,40 @@ def init_params(rows, cols, method='xavier', mean=0., std=1., isTheano=True, see
     """
     Initialize the weight matrix based on probabilitic distribution
 
-    Args:
-        rows (int): Size of the input, number of rows to be generated.
-        cols (int): Size of the output, number of columns to be generated.
-        method (str): Distibution to use to generated the weights (defaults 'xavier').
-        mean (float): Mean for the distribution to be generated (defaults 0.0).
-        std (float): Standard deviation for the distribution to be generated (defaults 1.0).
-        isTheano (bool): Needs to return a theano friendly-format (defaults True).
-        seed (int): Seed to be set for randomness (defaults None).
+    Parameters
+    ----------
+    rows: int
+        Size of the input, number of rows to be generated.
+    cols: int
+        Size of the output, number of columns to be generated.
+    method: str
+        Distibution to use to generated the weights (defaults 'xavier').
+        Zeros :math:`W_j = \\vec{0}`
+    
+        Ones :math:`W_j = \\vec{1}`
+        
+        Uniform :math:`W_j \\sim \\mathcal{U} _{\\left[0, 1 \\right)}`
+        
+        Xavier :math:`W_j \\sim \\mathcal{U}\\left[ -\\frac{\\sqrt{6}}{\\sqrt{n_j + n_{j+1}}}, \\frac{\\sqrt{6}}{\\sqrt{n_j + n_{j+1}}} \\right]`
+        
+        Normal :math:`W_j \\sim \\mathcal{N}(0, 1)`
+    mean: float
+        Mean for the distribution to be generated (defaults 0.0).
+    std: float
+        Standard deviation for the distribution to be generated (defaults 1.0).
+    isTheano: bool
+        Needs to return a theano friendly-format (defaults True).
+    seed: int
+        Seed to be set for randomness (defaults None).
 
-    Formula:
-    * Zeros:
-        $W_j = \vec{0}$
-    * Ones:
-        $W_j = \vec{1}$
-    * Uniform:
-        $W_j \sim \mathcal{U} _{\left[0, 1 \right)}$
-    * Xavier:
-        $W_j \sim \mathcal{U} _{\left[ -\frac{\sqrt{6}}{\sqrt{n_j + n_{j+1}}}, \frac{\sqrt{6}}{\sqrt{n_j + n_{j+1}}} \right]}$
-    * Normal:
-        $W_j \sim \mathcal{N}(0, 1)$
-
-    References:
+    References
+    ----------
     * Neuneier, Ralph, and Hans Georg Zimmermann. "How to train neural networks." In Neural networks: tricks of the trade, pp. 373-423. Springer, Berlin, Heidelberg, 1998.
     * Glorot, Xavier, and Yoshua Bengio. "Understanding the difficulty of training deep feedforward neural networks." In Proceedings of the thirteenth international conference on artificial intelligence and statistics, pp. 249-256. 2010.
 
-    Returns:
-        np.array: Initialized weight matrix
+    Returns
+    -------
+    np.array: Initialized weight matrix
     """
     # Set a seed or not
     rdm = np.random.RandomState(seed) if seed is not None else np.random
