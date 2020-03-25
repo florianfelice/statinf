@@ -6,9 +6,9 @@ from ..ml.activations import sigmoid
 
 
 class GLM:
-    ''' 
+    """ 
     [C. Cameron & P.k. Trivedi] - Microeconometrics methods and applications - 2005
-    '''
+    """
     def __init__(self, formula, data, fit_intercept=False, initializer='zeros'):
         self.data             = data # Pandas DataFrame
         # Parse the formula
@@ -32,24 +32,24 @@ class GLM:
 
 
     def _explain(self, beta):
-        '''
+        """
         1rst step build the linear combination
-        '''
+        """
         Xb   = self.X.dot(np.array(beta).T)
         return Xb
 
     def _prob(self, X):
-        ''' 
+        """ 
         Prob
-        '''
+        """
         prob = sigmoid(X.dot(self.beta))
         # prob = np.array([(1/(1+np.exp(-x))) for x in self._explain(beta)])
         return prob
         
     def _log_likelihood(self, X=None, Y=None):
-        '''
+        """
         Compute Log-Likelihood 
-        '''
+        """
         X_data = self.X if X is None else X
         Y_data = self.Y if Y is None else Y
 
@@ -61,23 +61,23 @@ class GLM:
 
 
     def _jacobian(self):
-        '''
+        """
         Gradient (Overall) not the score function 
-        '''
+        """
         gradient = np.array(self.Y - self._prob(self.X)).dot(self.X) # gradient of the likelihood
         return gradient
 
     def _hessian(self):
-        '''
+        """
         Hessian -- Fisher Information 
-        '''
+        """
         hessian = np.array((self._prob(self.X).dot(1 - self._prob(self.X)).sum()) * self.X.T.dot(self.X)) #! Wrong formula
         return hessian
 
     def variance(self):
-        '''
+        """
         Fisher Information
-        '''
+        """
         variance = np.linalg.inv(self._hessian())
         return np.array(variance)
 
@@ -104,5 +104,5 @@ class GLM:
     def predict(self, max_it=10):
         beta         = self._fit(max_it)
         self.predict = [1 if x > 0.5 else 0 for x in self._prob(beta)]
-        return print(f'''{self.predict}''')
+        return print(f"""{self.predict}""")
     
