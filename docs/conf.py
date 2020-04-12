@@ -13,13 +13,14 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import os
 import sys
+import datetime
 sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = u'statinf'
-copyright = u'2020, Florian Felice'
+copyright = u'2020, Florian Felice -'
 author = u'Florian Felice'
 
 # The short X.Y version
@@ -42,6 +43,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
+    'sphinx_copybutton',
 ]
 
 autoclass_content = 'both'
@@ -79,7 +81,7 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -90,7 +92,9 @@ html_theme = 'alabaster'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['static']
+
+html_last_updated_fmt = str(datetime.datetime.now().replace(microsecond=0))
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -101,6 +105,25 @@ html_static_path = ['_static']
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
+
+html_theme_options = {
+    'canonical_url': '',
+    'logo_only': True,
+    'display_version': True,
+    'prev_next_buttons_location': 'bottom',
+    'style_external_links': False,
+    'style_nav_header_background': '#663300',
+    # Toc options
+    'collapse_navigation': True,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    'includehidden': True,
+    'titles_only': False
+}
+
+html_logo = "images/statinf_white_transp.png"
+
+html_favicon = "images/statinf_icon_white_brown.ico"
 
 
 # -- Options for HTMLHelp output ---------------------------------------------

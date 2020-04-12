@@ -11,8 +11,21 @@ https://github.com/satopirka/deep-learning-theano/blob/master/example/mlp.py
 https://github.com/satopirka/deep-learning-theano/blob/master/dnn/optimizers.py
 """
 
-def build_shared_zeros(shape, name):
-    """ Builds a theano shared variable filled with a zeros numpy array """
+def build_shared_zeros(shape, name='v'):
+    """Builds a theano shared variable filled with a zeros numpy array
+    
+    :param shape: Shape of the vector to create.
+    :type shape: tuple
+    :param name: Name to give to the shared theano value, defaults to 'v'.
+    :type name: str
+
+    :example:
+
+    >>> build_shared_zeros(shape=(5, 10), name='r')
+
+    :return: Theano shared matrix
+    :rtype: theano.shared
+    """
     return theano.shared(
         value=np.zeros(shape, dtype=theano.config.floatX), 
         name=name, 
@@ -21,6 +34,11 @@ def build_shared_zeros(shape, name):
 
 
 class Optimizer(object):
+    """Optimization updater
+    
+    :param object: Optimizer object
+    :type object: class
+    """
     def __init__(self, params=None):
         if params is None:
             raise NotImplementedError()
@@ -35,31 +53,34 @@ class Optimizer(object):
 
 
 class SGD(Optimizer):
-    def __init__(self, learning_rate=0.01, params=None):
-        """
-        Parameters
-        ----------
-        learning_rate: float
-            Step size (defaults 0.01).
-        params: list
-            Parameters to update, containing gradients (defaults None).
+    """Stochastic Gradient Descent optimizer
     
-        Notes
-        -----
-        :math:`\\theta_{t} = \\theta_{t-1} - \\epsilon \\nabla f_{t}(\\theta_{t})`
+    :param params: List compiling the parameters to update.
+    :type params: list
+    :param learning_rate: Step size, defaults to 0.01.
+    :type learning_rate: float
 
-        References
-        ----------
-        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). Deep learning. MIT press.
+    :formula: .. math:: \\theta_{t} = \\theta_{t-1} - \\epsilon \\nabla f_{t}(\\theta_{t-1})
 
-        Returns
-        -------
-        list: Update parameters
-        """
+    :references: Goodfellow, I., Bengio, Y., & Courville, A. (2016). `Deep learning <https://www.deeplearningbook.org/>`_. MIT press.
+
+    :example:
+    
+    >>> SGD(params=[W, b], learning_rate=0.01).updates(cost)
+    """
+    def __init__(self, learning_rate=0.01, params=None):
         super(SGD, self).__init__(params=params)
         self.learning_rate = learning_rate
 
     def updates(self, loss=None):
+        """Update loss using the SGD formula
+        
+        :param loss: Vector of loss to be updated, defaults to None
+        :type loss: tensor, optional
+
+        :return: Updated parameters and gradients
+        :rtype: tensor
+        """
         super(SGD, self).updates(loss=loss)
 
         for param, gparam in zip(self.params, self.gparams):
@@ -69,29 +90,24 @@ class SGD(Optimizer):
 
 
 class MomentumSGD(Optimizer):
-    def __init__(self, learning_rate=0.01, alpha=0.9, params=None):
-        """
-        Parameters
-        ----------
-        learning_rate: float
-            Step size (defaults 0.01).
-        alpha: float
-            Momentum parameter (defaults 0.9).
-        params: list
-            Parameters to update, containing gradients (defaults None).
-        
-        Notes
-        -----
-        :math:`\\theta_{t} = \\theta_{t-1} + \\alpha v - \\epsilon \\nabla f_{t}(\\theta_{t})`
+    """Stochastic Gradient Descent with Momentum
+    
+    :param params: List compiling the parameters to update.
+    :type params: list
+    :param learning_rate: Step size, defaults to 0.01.
+    :type learning_rate: float
+    :param alpha: Momentum parameter, defaults to 0.9.
+    :type alpha: float
 
-        References
-        ----------
-        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). Deep learning. MIT press.
+    :formula: .. math:: \\theta_{t} = \\theta_{t-1} + \\alpha v - \\epsilon \\nabla f_{t}(\\theta_{t-1})
 
-        Returns
-        -------
-        list: Update parameters
-        """
+    :references: Goodfellow, I., Bengio, Y., & Courville, A. (2016). `Deep learning <https://www.deeplearningbook.org/>`_. MIT press.
+
+    :example:
+
+    >>> MomentumSGD(params=[W, b], learning_rate=0.01, alpha=0.9).updates(cost)
+    """
+    def __init__(self, params=None, learning_rate=0.01, alpha=0.9):
         super(MomentumSGD, self).__init__(params=params)
         self.learning_rate = learning_rate
         # Momentum value
@@ -99,6 +115,14 @@ class MomentumSGD(Optimizer):
         self.vs = [build_shared_zeros(t.shape.eval(), 'v') for t in self.params]
 
     def updates(self, loss=None):
+        """Update loss using the Momentum SGD formula
+        
+        :param loss: Vector of loss to be updated, defaults to None
+        :type loss: tensor, optional
+
+        :return: Updated parameters and gradients
+        :rtype: tensor
+        """
         super(MomentumSGD, self).updates(loss=loss)
 
         for v, param, gparam in zip(self.vs, self.params, self.gparams):
@@ -110,34 +134,31 @@ class MomentumSGD(Optimizer):
 
 
 class RMSprop(Optimizer):
-    def __init__(self, learning_rate=0.001, rho=0.9, delta=10e-6, params=None):
-        """
-        Parameters
-        ----------
-        learning_rate: float
-            Step size (defaults 0.001).
-        rho: float
-            Decay rate (defaults 0.9).
-        delta: float
-            Constant for division stability (defaults 10e-6).
-        params: list
-            Parameters to update, containing gradients (defaults None).
+    """RMSprop optimizer
+    
+    :param params: List compiling the parameters to update.
+    :type params: list
+    :param learning_rate: Step size, defaults to 0.001.
+    :type learning_rate: float
+    :param rho: Decay rate, defaults to 0.9.
+    :type rho: float
+    :param delta: Constant for division stability, defaults to 10e-6.
+    :type delta: float
+
+    :formula: .. math:: r = \\rho r + (1- \\rho) \\nabla f_{t}(\\theta_{t-1}) \\odot \\nabla f_{t}(\\theta_{t-1})
+    
+        .. math:: \\theta_{t} = \\theta_{t-1} - \\dfrac{\\epsilon}{\\sqrt{\\delta + r}} \\odot \\nabla f_{t}(\\theta_{t-1})
+
+
+    :references: * Tieleman, T., & Hinton, G. (2012). `Lecture 6.5-rmsprop: Divide the gradient by a running average of its recent magnitude <https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf>`_. COURSERA: Neural networks for machine learning, 4(2), 26-31.
         
-        Notes
-        -----
-        .. :math:
-            r = \\rho r + (1- \\rho) \\nabla f_{t}(\\theta_{t}) \\odot \\nabla f_{t}(\\theta_{t})\\
-            \\theta_{t} = \\theta_{t-1} - \\dfrac{\\epsilon}{\\sqrt{\\delta + r}} \\odot \\nabla f_{t}(\\theta_{t})
+        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). `Deep learning <https://www.deeplearningbook.org/>`_. MIT press.
 
-        References
-        ----------
-        * Tieleman, T., & Hinton, G. (2012). Lecture 6.5-rmsprop: Divide the gradient by a running average of its recent magnitude. COURSERA: Neural networks for machine learning, 4(2), 26-31.
-        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). Deep learning. MIT press.
+    :example:
 
-        Returns
-        -------
-        list: Update parameters
-        """
+    >>> RMSprop(params=[W, b], learning_rate=0.01, rho=0.9, delta=10e-6).updates(cost)
+    """
+    def __init__(self, params=None, learning_rate=0.001, rho=0.9, delta=10e-6):
         super(RMSprop, self).__init__(params=params)
 
         self.learning_rate = learning_rate
@@ -147,6 +168,14 @@ class RMSprop(Optimizer):
         self.mss = [build_shared_zeros(t.shape.eval(), 'r') for t in self.params]
 
     def updates(self, loss=None):
+        """Update loss using the RMSprop formula
+        
+        :param loss: Vector of loss to be updated, defaults to None
+        :type loss: tensor, optional
+
+        :return: Updated parameters and gradients
+        :rtype: tensor
+        """
         super(RMSprop, self).updates(loss=loss)
 
         for r, param, gparam in zip(self.mss, self.params, self.gparams):
@@ -159,39 +188,35 @@ class RMSprop(Optimizer):
 
 
 class Adam(Optimizer):
-    def __init__(self, learning_rate=0.001, beta1=0.9, beta2=0.999, delta=10e-8, params=None):
-        """
-        Parameters
-        ----------
-        learning_rate: float
-            Step size (defaults 0.001).
-        beta1: float
-            Exponential decay rate for first moment estimate (defaults 0.9).
-        beta2: float
-            Exponential decay rate for second moment estimate (defaults 0.999).
-        delta: float
-            Small constant for numerical stability (defaults 10e-8)
-        params: list
-            Parameters to update, containing gradients (defaults None).
+    """Adaptive Moments optimizer
+    
+    :param params: List compiling the parameters to update.
+    :type params: list
+    :param learning_rate: Step size, defaults to 0.001.
+    :type learning_rate: float
+    :param beta1: Exponential decay rate for first moment estimate, defaults to 0.9.
+    :type beta1: float
+    :param beta2: Exponential decay rate for scond moment estimate, defaults to 0.999.
+    :type beta2: float
+    :param delta: Constant for division stability, defaults to 10e-8.
+    :type delta: float
+
+    :formula: .. math:: m_{t} = \\beta_{1} m_{t-1} + (1 - \\beta_{1}) \\nabla_{\\theta} f_{t}(\\theta_{t-1})
+            .. math:: v_{t} = \\beta_{2} v_{t-1} + (1 - \\beta_{2}) \\nabla_{\\theta}^{2} f_{t}(\\theta_{t-1})
+            .. math:: \\hat{m}_{t} = \\dfrac{m_{t}}{1 - \\beta_{1}^{t}}
+            .. math:: \\hat{v}_{t} = \\dfrac{v_{t}}{1 - \\beta_{2}^{t}}
+            .. math:: \\theta_{t} = \\theta_{t-1} - \\alpha \\dfrac{\\hat{m}_{t}}{\\sqrt{\\hat{v}_{t}} + \\delta}
+
+
+    :references: * Kingma, D. P., & Ba, J. (2014). `Adam: A method for stochastic optimization <https://arxiv.org/pdf/1412.6980.pdf>`_. arXiv preprint arXiv:1412.6980
         
-        Notes
-        -----
-        .. :math:
-            m_{t} = \\beta_{1} m_{t-1} + (1 - \\beta_{1}) \\nabla_{\\theta} f_{t}(\\theta_{t-1})\\
-            v_{t} = \\beta_{2} v_{t-1} + (1 - \\beta_{2}) \\nabla_{\\theta}^{2} f_{t}(\\theta_{t-1})\\
-            \\hat{m}_{t} = \\dfrac{m_{t}}{1 - \\beta_{1}^{t}}\\
-            \\hat{v}_{t} = \\dfrac{v_{t}}{1 - \\beta_{2}^{t}}\\
-            \\theta_{t} = \\theta_{t-1} - \\alpha \\dfrac{\\hat{m}_{t}}{\\sqrt{\\hat{v}_{t}} + \\delta}
+        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). `Deep learning <https://www.deeplearningbook.org/>`_. MIT press.
 
-        References
-        ----------
-        * Kingma, D. P., & Ba, J. (2014). Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980 (https://arxiv.org/pdf/1412.6980.pdf)
-        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). Deep learning. MIT press.
+    :example:
 
-        Returns
-        -------
-        list: Update parameters
-        """
+    >>> ADAM(params=[W, b], learning_rate=0.001, beta1=0.9, beta2=0.999, delta=10e-8).updates(cost)
+    """
+    def __init__(self, params=None, learning_rate=0.001, beta1=0.9, beta2=0.999, delta=10e-8):
         super(Adam, self).__init__(params=params)
 
         self.alpha = learning_rate
@@ -204,6 +229,14 @@ class Adam(Optimizer):
         self.vs = [build_shared_zeros(t.shape.eval(), 'v') for t in self.params]
 
     def updates(self, loss=None):
+        """Update loss using the Adam formula
+        
+        :param loss: Vector of loss to be updated, defaults to None
+        :type loss: tensor, optional
+
+        :return: Updated parameters and gradients
+        :rtype: tensor
+        """
         super(Adam, self).updates(loss=loss)
 
         for m, v, param, gparam in zip(self.ms, self.vs, self.params, self.gparams):
@@ -222,33 +255,27 @@ class Adam(Optimizer):
 
 
 class AdaGrad(Optimizer):
-    def __init__(self, learning_rate=0.01, delta=1e-7, params=None):
-        """
-        Parameters
-        ----------
-        learning_rate: float
-            Step size (defaults 0.001).
-        delta: float
-            Constant for division stability (defaults 10e-6).
-        params: list
-            Parameters to update, containing gradients (defaults None).
-        
-        Notes
-        -----
-        .. :math:
+    """Adaptive Gradient optimizer
+    
+    :param params: List compiling the parameters to update.
+    :type params: list
+    :param learning_rate: Step size, defaults to 0.01.
+    :type learning_rate: float
+    :param delta: Constant for division stability, defaults to 1e-7.
+    :type delta: float
 
-            r = r + \\nabla f_{t}(\\theta_{t}) \\odot \\nabla f_{t}(\\theta_{t})\\
-            \\theta_{t} = \\theta_{t-1} - \\frac{\\epsilon}{\\sqrt{\\delta + r}} \\odot \\nabla f_{t}(\\theta_{t})
-            
-        References
-        ----------
-        * Duchi, J., Hazan, E., & Singer, Y. (2011). Adaptive subgradient methods for online learning and stochastic optimization. Journal of machine learning research, 12(Jul), 2121-2159. (http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf)
-        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). Deep learning. MIT press.
+    :formula: .. math:: r = r + \\nabla f_{t}(\\theta_{t}) \\odot \\nabla f_{t}(\\theta_{t-1})
+            .. math:: \\theta_{t} = \\theta_{t-1} - \\frac{\\epsilon}{\\sqrt{\\delta + r}} \\odot \\nabla f_{t}(\\theta_{t-1})
 
-        Returns
-        -------
-        list: Update parameters
-        """
+
+    :references: * Duchi, J., Hazan, E., & Singer, Y. (2011). `Adaptive subgradient methods for online learning and stochastic optimization <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_. Journal of machine learning research, 12 (Jul), 2121-2159.
+        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). `Deep learning <https://www.deeplearningbook.org/>`_. MIT press.
+
+    :example:
+
+    >>> AdaGrad(params=[W, b], learning_rate=0.01, delta=1e-7).updates(cost)
+    """
+    def __init__(self, params=None, learning_rate=0.01, delta=1e-7):
         super(AdaGrad, self).__init__(params=params)
 
         self.learning_rate = learning_rate
@@ -258,6 +285,14 @@ class AdaGrad(Optimizer):
         self.accugrads = [build_shared_zeros(t.shape.eval(), 'r') for t in self.params]
 
     def updates(self, loss=None):
+        """Update loss using the AdaGrad formula
+        
+        :param loss: Vector of loss to be updated, defaults to None
+        :type loss: tensor, optional
+
+        :return: Updated parameters and gradients
+        :rtype: tensor
+        """
         super(AdaGrad, self).updates(loss=loss)
 
         for r, param, gparam in zip(self.accugrads, self.params, self.gparams):
@@ -269,36 +304,31 @@ class AdaGrad(Optimizer):
 
 
 class AdaMax(Optimizer):
+    """AdaMax optimizer (Adam with infinite norm)
     
-    def __init__(self, learning_rate=0.001, beta1=0.9, beta2=0.999, params=None):
-        """
-        Parameters
-        ----------
-        learning_rate: float
-            Step size (defaults 0.001).
-        beta1: float
-            Exponential decay rate for first moment estimate (defaults 0.9).
-        beta2: float
-            Exponential decay rate for second moment estimate (defaults 0.999).
-        params: list
-            Parameters to update, containing gradients (defaults None).
-        
-        Notes
-        -----
-        .. :math:
-            m_{t} = \\beta_{1} m_{t-1} + (1 - \\beta_{1}) \\nabla_{\\theta} f_{t}(\\theta_{t-1})\\
-            u_{t} = \\max(\\beta_{2} \\cdot u_{t-1}, |\\nabla f_{t}(\\theta_{t-1})|)\\
-            \\theta_{t} = \\theta_{t-1} - \\alpha \\dfrac{\\hat{m}_{t}}{\\sqrt{\\hat{v}_{t}} + \\epsilon}
+    :param params: List compiling the parameters to update.
+    :type params: list
+    :param learning_rate: Step size, defaults to 0.001.
+    :type learning_rate: float
+    :param beta1: Exponential decay rate for first moment estimate, defaults to 0.9.
+    :type beta1: float
+    :param beta2: Exponential decay rate for scond moment estimate, defaults to 0.999.
+    :type beta2: float
 
-        References
-        ----------
-        * Kingma, D. P., & Ba, J. (2014). Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980 (https://arxiv.org/pdf/1412.6980.pdf)
-        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). Deep learning. MIT press.
+    :formula: .. math:: m_{t} = \\beta_{1} m_{t-1} + (1 - \\beta_{1}) \\nabla_{\\theta} f_{t}(\\theta_{t-1})
+            .. math:: u_{t} = \\max(\\beta_{2} \\cdot u_{t-1}, |\\nabla f_{t}(\\theta_{t-1})|)
+            .. math:: \\theta_{t} = \\theta_{t-1} - \\alpha \\dfrac{\\hat{m}_{t}}{\\sqrt{\\hat{v}_{t}} + \\epsilon}
 
-        Returns
-        -------
-        list: Update parameters
-        """
+
+    :references: * Kingma, D. P., & Ba, J. (2014). `Adam: A method for stochastic optimization <https://arxiv.org/pdf/1412.6980.pdf>`_. arXiv preprint arXiv:1412.6980
+        * Goodfellow, I., Bengio, Y., & Courville, A. (2016). `Deep learning <https://www.deeplearningbook.org/>`_. MIT press.
+
+    :example:
+
+    >>> AdaMax(params=[W, b], learning_rate=0.001, beta1=0.9, beta2=0.999).updates(cost)
+    """
+    
+    def __init__(self, params=None, learning_rate=0.001, beta1=0.9, beta2=0.999):
         super(AdaMax, self).__init__(params=params)
 
         self.alpha = learning_rate
@@ -310,6 +340,14 @@ class AdaMax(Optimizer):
         self.us = [build_shared_zeros(t.shape.eval(), 'u') for t in self.params]
 
     def updates(self, loss=None):
+        """Update loss using the AdaMax formula
+        
+        :param loss: Vector of loss to be updated, defaults to None
+        :type loss: tensor, optional
+
+        :return: Updated parameters and gradients
+        :rtype: tensor
+        """
         super(AdaMax, self).updates(loss=loss)
 
         for m, u, param, gparam in zip(self.ms, self.us, self.params, self.gparams):

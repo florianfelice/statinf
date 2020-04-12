@@ -7,7 +7,7 @@ import getpass
 
 sys.path.append(f"/Users/{getpass.getuser()}/Documents/statinf/")
 
-from statinf.regressions.LinearModels import OLS
+from statinf.regressions import OLS
 from statinf.data.GenerateData import generate_dataset
 from statinf.ml.neuralnetwork import MLP, Layer
 from statinf.ml.losses import mean_squared_error
@@ -54,7 +54,7 @@ print(ols.summary())
 
 print('\n=== TEST MLP ===\n')
 
-nn = MLP(loss='mse', optimizer='sgd')
+nn = MLP(loss='mse')
 nn.add(Layer(len(X_lin), 1))
 
 # Train the neural network

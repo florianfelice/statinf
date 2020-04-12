@@ -1,38 +1,25 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Oct  5 17:13:38 2019
-
-@author: Florian Felice
-"""
-
 import numpy as np
 from scipy import stats
 import pandas as pd
 
-#TODO: Add Fisher test
+
 #TODO: Add Log-Likehood + AIC + BIC
 #TODO: Add dask for GPU usage
 
 
 class OLS:
-    """
-    Class for Ordinary Least Squares model.
-    Fits the data and returns coefficients and key metrics.
-    
-    Parameters
-    ----------
-    X : ndarray
-        Explanatory variables.
-    Y : ndarray
-        Explained variables to be fitted.
-    fit_intercept : bool
-        Force the model to fit an intercept. Default is False.
-    """
-    X = []
-    Y = []
     
     def __init__(self, formula, data, fit_intercept=True):
+        """Ordinary Least Squares regression
+        
+        :param formula:  Regression formula to be run of the form :obj:`y ~ x1 + x2`.
+        :type formula: :obj:`str`
+        :param data: Input data with Pandas format.
+        :type data: :obj:`pandas.DataFrame`
+        :param fit_intercept: Used for adding intercept in the regression formula, defaults to True.
+        :type fit_intercept: :obj:`bool`, optional
+        """
+
         super(OLS, self).__init__()
         # Parse formula
         self.no_space_formula = formula.replace(' ', '')
@@ -53,133 +40,122 @@ class OLS:
         # Use intercept or only explanatory variables
         self.fit_intercept = fit_intercept
     
-    def get_X(self):
+    def _get_X(self):
         if self.fit_intercept:
             return(np.hstack((np.ones((self.n, 1), dtype=self.X.dtype), self.X)))
         else:
             return(self.X)
     
     def get_betas(self):
+        """Computes the estimates for each explanatory variable
+
+        :formula: .. math:: \\beta = (X'X)^{-1} X'Y
+
+        :return: Estimated coefficients
+        :rtype: :obj:`numpy.array`
         """
-        Computes the estimates for each explanatory variable
-        
-        Formula
-        -------
-        b = (X'X)^-1 X'Y
-        
-         * X is a matrix for the explanatory variables
-         * Y is a vector for the target variable
-         * ' denotes the transpose operator
-         * ^-1 denotes the inverse operator
-        
-        Returns
-        -------
-        betas
-            The estimated coefficients.
-        """
-        XtX = self.get_X().T.dot(self.get_X())
+        XtX = self._get_X().T.dot(self._get_X())
         XtX_1 = np.linalg.inv(XtX)
-        XtY = self.get_X().T.dot(self.Y)
+        XtY = self._get_X().T.dot(self.Y)
         beta = XtX_1.dot(XtY)
         return(beta)
     
     def fitted_values(self):
-        """
-        Computes the estimated values of Y
-        
-        Formula
-        -------
-        Y_hat = bX
-        
-        Returns
-        -------
-        Y_hat
-            The fitted values of Y.
+        """Computes the estimated values of Y
+
+        :formula: .. math:: \\hat{Y} = X \\beta
+
+        :return: Fitted values for Y.
+        :rtype: :obj:`numpy.array`
         """
         betas = self.get_betas()
         Y_hat = np.zeros(len(self.Y))
         for i in range(len(betas)):
-            Y_hat += (betas[i] * self.get_X().T[i])
+            Y_hat += (betas[i] * self._get_X().T[i])
         return(Y_hat)
     
-    def get_error(self):
-        """
-        Compute the error term/residuals
-        
-        Formula
-        -------
-        res = Y - Y_hat
-        
-        Returns
-        -------
-        res
-            The estimated residual term.
+    def _get_error(self):
+        """Compute the error term/residuals
+
+        :formula: .. math:: \\epsilon = Y - \\hat{Y}
+
+        :return: Estimated residual term.
+        :rtype: :obj:`numpy.array`
         """
         res = self.Y - self.fitted_values()
         return(res)
-    
+
     def rss(self):
+        """Residual Sum of Squares
+
+        :formula: .. math:: RSS = \\sum_{i=1}^{n} (y_{i} - \\hat{y}_{i})^{2}
+            
+            where :math:`y_{i}` denotes the true/observed value of :math:`y` for individual :math:`i` and :math:`\\hat{y}_{i}` denotes the predicted value of :math:`y` for individual :math:`i`.
+
+        :return: Residual Sum of Squares.
+        :rtype: :obj:`float`
         """
-        Computes Residual Sum of Squares
-        
-        Formula
-        -------
-        RSS = Sum(y_i - y_hat_i)**2
-        
-         * y_i denotes the true/observed value of y for individual i
-         * y_hat_i denotes the predicted value of y for individual i
-        """
-        return((self.get_error()**2).sum())
+        return((self._get_error()**2).sum())
     
     def tss(self):
+        """Total Sum of Squares
+
+        :formula: .. math:: TSS = \\sum_{i=1}^{n} (y_{i} - \\bar{y})^{2}
+            
+            where :math:`y_{i}` denotes the true/observed value of :math:`y` for individual :math:`i` and :math:`\\bar{y}_{i}` denotes the average value of :math:`y`.
+
+        :return: Total Sum of Squares.
+        :rtype: :obj:`float`
         """
-        Computes Total Sum of Squares.
         
-        Formula
-        -------
-        TSS = Sum(Y_i - Y_bar)**2
-        """
         y_bar = self.Y.mean()
         total_squared = (self.Y - y_bar) ** 2
         return(total_squared.sum())
     
     def r_squared(self):
+        """:math:`R^{2}` -- Goodness of fit
+
+        :formula: .. math:: R^{2} = 1 - \dfrac{RSS}{TSS}
+
+        :return: Goodness of fit.
+        :rtype: :obj:`float`
         """
-        Computes the standard R**2
-        
-        Formula
-        -------
-        R**2 = 1 - RSS / TSS        
-        """
+
         return(1 - self.rss()/self.tss())
-    
+
     def adjusted_r_squared(self):
+        """Adjusted-:math:`R^{2}` -- Goodness of fit
+
+        :formula: .. math:: R^{2}_{adj} = 1 - (1 - R^{2}) \dfrac{n - 1}{n - p - 1}
+
+            where :math:`p` denotes the number of estimates (i.e. explanatory variables) and :math:`n` the sample size
+
+        :references: Theil, Henri (1961). Economic Forecasts and Policy.
+
+        :return: Adjusted goodness of fit.
+        :rtype: :obj:`float`
         """
-        Computes Adjusted R**2.
-        
-        Formula
-        -------
-        Adjusted R**2 = 1 - (1 - R**2) * (n - 1) / (n - p - 1)
-        
-         * p denotes the number of estimates (i.e. explanatory variables)
-         * n denotes the sample size
-        
-        Reference
-        ---------
-        Theil, Henri (1961). Economic Forecasts and Policy
-        """
+
         adj_r_2 = 1 - (1 - self.r_squared()) * (self.n - 1) / (self.n - self.p - 1)
         return(adj_r_2)
     
-    def fisher(self):
-        """
+    def _fisher(self):
+        """Fisher test
+
+        :formula: .. math:: \\mathcal{F} = \dfrac{TSS - RSS}{\\frac{RSS}{n - p}}
+
+            where :math:`p` denotes the number of estimates (i.e. explanatory variables) and :math:`n` the sample size
+
+        :references: Shen, Q., & Faraway, J. (2004). `An F test for linear models with functional responses <https://www.jstor.org/stable/24307230>`_. Statistica Sinica, 1239-1257.
+
+        :return: Value of the :math:`\\mathcal{F}`-statistic.
+        :rtype: :obj:`float`
         """
         MSE = (self.tss() - self.rss()) / (self.p - 1)
         MSR = self.rss() / self.dfe
         return(MSE/MSR)
     
-    def summary(self):
-        """
+    """
         Returns statistics summary for estimates
         
         Formula
@@ -196,18 +172,47 @@ class OLS:
                 
         Reference
         ---------
-        Student. (1908). The probable error of a mean. Biometrika, 1-25.
+        
+        """
+    def summary(self):
+        """Statistical summary for OLS
+
+        :formulae: * Fisher test:
+
+            .. math:: \\mathcal{F} = \dfrac{TSS - RSS}{\\frac{RSS}{n - p}}
+
+            where :math:`p` denotes the number of estimates (i.e. explanatory variables) and :math:`n` the sample size
+
+
+            * Covariance matrix:
+
+            .. math:: \\mathbb{V}(\\beta) = \\sigma^{2} X'X
+
+            where :math:`\\sigma^{2} = \\frac{RSS}{n - p -1}`
+
+
+            * Coefficients' significance:
+            
+            .. math:: p = 2 \\left( 1 - T_{n} \\left( \dfrac{\\beta}{\\sqrt{\\mathbb{V}(\\beta)}} \\right) \\right)
+            
+            where :math:`T` denotes the Student cumulative distribution function (c.d.f.) with :math:`n` degrees of freedom
+
+            
+
+        :references: * Student. (1908). The probable error of a mean. Biometrika, 1-25.
+            * Shen, Q., & Faraway, J. (2004). `An F test for linear models with functional responses <https://www.jstor.org/stable/24307230>`_. Statistica Sinica, 1239-1257.
+            * Wooldridge, J. M. (2016). `Introductory econometrics: A modern approach <https://faculty.arts.ubc.ca/nfortin/econ495/IntroductoryEconometrics_AModernApproach_FourthEdition_Jeffrey_Wooldridge.pdf>`_. Nelson Education.
         """
         # Initialize
         betas = self.get_betas()
-        # Add intercept if fit is asked by user
-        
-        sigma_2 = (sum((self.get_error())**2))/(len(self.get_X()) - len(self.get_X()[0]))
-        variance_beta = sigma_2 * (np.linalg.inv(np.dot(self.get_X().T, self.get_X())).diagonal())
+        X = self._get_X()
+
+        sigma_2 = (sum((self._get_error())**2))/(len(X) - len(X[0]))
+        variance_beta = sigma_2 * (np.linalg.inv(np.dot(X.T, X)).diagonal())
         std_err_beta = np.sqrt(variance_beta)
-        t_values = betas/ std_err_beta
+        t_values = betas / std_err_beta
         
-        p_values =[2 * (1 - stats.t.cdf(np.abs(i), (len(self.get_X())-1))) for i in t_values]
+        p_values = [2 * (1 - stats.t.cdf(np.abs(i), (len(X)-1))) for i in t_values]
         
         summary_df = pd.DataFrame()
         summary_df["Variables"] = ['(Intercept)'] + self.X_col if self.fit_intercept else self.X_col
@@ -219,7 +224,7 @@ class OLS:
         r2 = self.r_squared()
         adj_r2 = self.adjusted_r_squared()
         #
-        fisher = self.fisher()
+        fisher = self._fisher()
         #
         print('=========================================================================')
         print('                               OLS summary                               ')
@@ -229,15 +234,17 @@ class OLS:
         print('| Fisher = {:.5f}                         '.format(fisher))
         print('=========================================================================')
         print(summary_df.to_string(index=False))
-    
+
     def predict(self, new_data):
-        """
-        Returns predicted values Y_hat for for a new dataset
+        """Predicted :math:`\\hat{Y}` values for for a new dataset
         
-        Formula
-        -------
-        Y = X \beta
+        :param new_data: New data to evaluate with pandas data-frame format.
+        :type new_data: :obj:`pandas.DataFrame`
         
+        :formula: .. math:: \\hat{Y} = X \\hat{\\beta}
+
+        :return: Predictions
+        :rtype: :obj:`numpy.array`
         """
         X_array = new_data[self.X_col].to_numpy()
         if self.fit_intercept:
@@ -246,17 +253,3 @@ class OLS:
             new_X = X_array
         
         return np.dot(new_X, self.get_betas())
-
-
-
-# Test:
-"""
-import statinf.GenerateData as gd
-
-df = generate_dataset(coeffs=[1.2556, 3.465, 1.665414,9.5444], n=100, std_dev=50, intercept=3.6441)
-
-formula = "Y ~ X1 + X2 + X3 + X0"
-ols = OLS(formula, df, fit_intercept = True)
-
-ols.summary()
-"""

@@ -2,16 +2,34 @@ import numpy as np
 import pandas as pd
 
 def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', binary=False, seed=None, **kwargs):
-    """
-    Generate a synthetic dataset for linear or binary data.
+    """Generate an artificial dataset
 
-    Args:
-    coeffs (list): Coefficients for the linear piece.
-    n (int): Number of observations/rows required.
-    std_dev (float): Standard deviation for the normally distributed data.
-    intercept (float): Value of the intercept (defaults 0.0).
-    distribution (str): Probability distribution from which we draw the data (defaults 'normal').
-    binary (bool): Is the output data (y) binary (defaults False).
+    :param coeffs: List of coefficients to use for computing the ouytput variable.
+    :type coeffs: :obj:`list`
+    :param n: Number of observations to generate.
+    :type n: :obj:`int`
+    :param std_dev: Standard deviation of the distribution.
+    :type std_dev: :obj:`list`
+    :param intercept: Value of the intercept to be set, defaults to 0.
+    :type intercept: :obj:`float`, optional
+    :param distribution: Type of distribution to use for generating the input variables, defaults to 'normal'. Can be:
+
+        * `normal`: :math:`X \\sim \\mathcal{N}(\\mu, \\sigma^{2})`
+        * `unirform`: :math:`X \\sim \\mathcal{U}_{[\\text{low}, \\text{high}]}`
+
+    :type distribution: :obj:`str`, optional
+    :param binary: Define if output is binary, defaults to False.
+    :type binary: :obj:`bool`, optional
+    :param seed: Random seed, defaults to None.
+    :type seed: :obj:`int`, optional
+
+    :param \*\*kwargs: Arguments to be passed in the distribution function. Can be:
+
+        * `normal`: :obj:`loc` = :math:`\\mu` and :obj:`scale` = :math:`\\sigma^{2}`
+        * `uniform`: :obj:`low` and :obj:`high`
+
+    :return: DataFrame with output variable named as :obj:`Y` and covariates as :obj:`X0`, :obj:`X1`, :obj:`X2`, ...
+    :rtype: :obj:`pandas.DataFrame`
     """
 
     rdm = np.random.RandomState(seed) if seed else np.random

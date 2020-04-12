@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..ml.initilizations import init_params
+from ..ml.initializations import init_params
 from ..ml.activations import sigmoid
 # from .glm_test import GLM
 

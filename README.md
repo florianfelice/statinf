@@ -1,7 +1,25 @@
 # STATINF
 
+## 1. Installation
+[![Downloads](https://pepy.tech/badge/statinf)](https://pepy.tech/project/statinf)
+[![PyPI version](https://badge.fury.io/py/statinf.svg)](https://pypi.org/project/statinf/)
+
+You can get statinf from [PyPI](https://pypi.org/project/statinf/) with:
+
+```bash
+pip install statinf
+```
+
 `statinf` is a library for statistics and causal inference.
 It provides main the statistical models ranging from the traditional OLS to Neural Networks.
+
+The library is supported on Windows, Linux and MacOs.
+
+
+
+## 2. Documentation
+
+You can find the full documentation at [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github) 
 
 
 ## Regressions
