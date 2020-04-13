@@ -11,10 +11,9 @@ statinf/data/GenerateData.py
 statinf/data/__init__.py
 statinf/ml/__init__.py
 statinf/ml/activations.py
-statinf/ml/initilizations.py
+statinf/ml/initializations.py
 statinf/ml/losses.py
 statinf/ml/neuralnetwork.py
-statinf/ml/neuralnetwork_old.py
 statinf/ml/optimizers.py
 statinf/ml/performance.py
 statinf/regressions/LinearModels.py

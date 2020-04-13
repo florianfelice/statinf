@@ -27,7 +27,20 @@ You can replicate a linear regression (`OLS <../econometrics/ols/ols.html>`_) wi
     nn.train(data=data, X=X, Y=Y, epochs=1, learning_rate=0.001)
 
     # Predict new output
-    nn.predict(new_data=new_df)
+    pred = nn.predict(new_data=new_df)
+
+    # Get the network's parameters
+    print(nn.get_weights())
+
+
+The output will be:
+
+.. code-block:: python
+
+    {'weights 0': array([[ 1.32005564],
+       [-6.38121934],
+       [ 1.64515704],
+       [ 1.48571785]]), 'bias 0': array([0.81190412])}
 
 
 
@@ -65,7 +78,7 @@ The below example shows how to fit a complex binary classification problem.
     nn.train(data=data, X=X, Y=Y, epochs=100, learning_rate=0.001, optimizer='adam')
 
     # Predict new output
-    nn.predict(new_data=new_df)
+    pred = nn.predict(new_data=new_df)
 
 
 

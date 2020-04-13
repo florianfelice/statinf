@@ -12,7 +12,7 @@ The objective is to implement new methodologies from research projects on these 
 The library also provides a data generator for linear and binary data.
 
 
-The library is pip-installable and the source code is available on my Git.
+The library is pip-installable and the source code is available on my `Git <https://github.com/florianfelice/statinf>`_.
 For any question or suggestion of improvement, please `contact me <mailto:florian.website.mail@gmail.com>`_.
 
 

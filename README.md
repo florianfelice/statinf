@@ -19,12 +19,14 @@ The library is supported on Windows, Linux and MacOs.
 
 ## 2. Documentation
 
-You can find the full documentation at [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github) 
+You can find the full documentation at [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
 
 
-## Regressions
+## 3. Regressions
 
-### OLS
+You can find the below examples and many more on [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
+
+### 3.1. OLS
 
 `statinf` comes with the OLS regression implemented with the analytical formula:
 
@@ -65,7 +67,7 @@ Variables  Coefficients  Standard Errors    t values  Probabilites
 ```
 
 
-### Logistic regression
+### 3.2. Logistic regression
 
 The logistic regression can be used for binary classification where ![Y](https://latex.codecogs.com/svg.latex?\Large&space;Y) follows a Bernoulli distribution. With ![X](https://latex.codecogs.com/svg.latex?\Large&space;X) being the matrix of regressors, we have:
 
@@ -103,9 +105,7 @@ The ouput:
 ```
 
 
-## Deep Learning
-
-### Multi Layer Perceptron
+### 3.3. Multi Layer Perceptron
 
 You can train a Neural Network using the `MLP` class.
 The below example shows how to train an MLP with 1 single linear layer. It is equivalent to implement an OLS with Gradient Descent.

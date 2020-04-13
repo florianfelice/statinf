@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: statinf
-Version: 1.0.16
+Version: 1.0.17
 Summary: A library for statistics and causal inference
 Home-page: https://github.com/florianfelice/statinf
 Author: Florian Felice
@@ -8,13 +8,33 @@ Author-email: florian.felice@outlook.com
 License: UNKNOWN
 Description: # STATINF
         
+        ## 1. Installation
+        [![Downloads](https://pepy.tech/badge/statinf)](https://pepy.tech/project/statinf)
+        [![PyPI version](https://badge.fury.io/py/statinf.svg)](https://pypi.org/project/statinf/)
+        
+        You can get statinf from [PyPI](https://pypi.org/project/statinf/) with:
+        
+        ```bash
+        pip install statinf
+        ```
+        
         `statinf` is a library for statistics and causal inference.
         It provides main the statistical models ranging from the traditional OLS to Neural Networks.
         
+        The library is supported on Windows, Linux and MacOs.
         
-        ## Regressions
         
-        ### OLS
+        
+        ## 2. Documentation
+        
+        You can find the full documentation at [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
+        
+        
+        ## 3. Regressions
+        
+        You can find the below examples and many more on [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
+        
+        ### 3.1. OLS
         
         `statinf` comes with the OLS regression implemented with the analytical formula:
         
@@ -55,7 +75,7 @@ Description: # STATINF
         ```
         
         
-        ### Logistic regression
+        ### 3.2. Logistic regression
         
         The logistic regression can be used for binary classification where ![Y](https://latex.codecogs.com/svg.latex?\Large&space;Y) follows a Bernoulli distribution. With ![X](https://latex.codecogs.com/svg.latex?\Large&space;X) being the matrix of regressors, we have:
         
@@ -93,9 +113,7 @@ Description: # STATINF
         ```
         
         
-        ## Deep Learning
-        
-        ### Multi Layer Perceptron
+        ### 3.3. Multi Layer Perceptron
         
         You can train a Neural Network using the `MLP` class.
         The below example shows how to train an MLP with 1 single linear layer. It is equivalent to implement an OLS with Gradient Descent.
