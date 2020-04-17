@@ -220,8 +220,8 @@ class OLS:
         summary_df["Variables"] = ['(Intercept)'] + self.X_col if self.fit_intercept else self.X_col
         summary_df["Coefficients"] = betas
         summary_df["Standard Errors"] = std_err_beta
-        summary_df["t values"] = t_values
-        summary_df["Probabilites"] = p_values
+        summary_df["t-values"] = t_values
+        summary_df["Probabilities"] = p_values
         
         r2 = self.r_squared()
         adj_r2 = self.adjusted_r_squared()
