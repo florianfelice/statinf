@@ -174,8 +174,11 @@ class OLS:
         ---------
         
         """
-    def summary(self):
+    def summary(self, return_df=False):
         """Statistical summary for OLS
+        
+        :param return_df: Return the summary as a Pandas DataFrame, else print a string, defaults to False.
+        :type return_df: :obj:`bool`
 
         :formulae: * Fisher test:
 
@@ -192,12 +195,11 @@ class OLS:
 
 
             * Coefficients' significance:
-            
-            .. math:: p = 2 \\left( 1 - T_{n} \\left( \dfrac{\\beta}{\\sqrt{\\mathbb{V}(\\beta)}} \\right) \\right)
-            
+
+            .. math:: p = 2 \\left( 1 - T_{n} \\left( \\dfrac{\\beta}{\\sqrt{\\mathbb{V}(\\beta)}} \\right) \\right)
+
             where :math:`T` denotes the Student cumulative distribution function (c.d.f.) with :math:`n` degrees of freedom
 
-            
 
         :references: * Student. (1908). The probable error of a mean. Biometrika, 1-25.
             * Shen, Q., & Faraway, J. (2004). `An F test for linear models with functional responses <https://www.jstor.org/stable/24307230>`_. Statistica Sinica, 1239-1257.
@@ -226,14 +228,17 @@ class OLS:
         #
         fisher = self._fisher()
         #
-        print('=========================================================================')
-        print('                               OLS summary                               ')
-        print('=========================================================================')
-        print('| R² = {:.5f}                  | Adjusted-R² = {:.5f}'.format(r2, adj_r2))
-        print('| n  = {:6}                   | p = {:5}'.format(self.n, self.p))
-        print('| Fisher = {:.5f}                         '.format(fisher))
-        print('=========================================================================')
-        print(summary_df.to_string(index=False))
+        if return_df:
+            return(summary_df)
+        else:
+            print('=========================================================================')
+            print('                               OLS summary                               ')
+            print('=========================================================================')
+            print('| R² = {:.5f}                  | Adjusted-R² = {:.5f}'.format(r2, adj_r2))
+            print('| n  = {:6}                   | p = {:5}'.format(self.n, self.p))
+            print('| Fisher = {:.5f}                         '.format(fisher))
+            print('=========================================================================')
+            print(summary_df.to_string(index=False))
 
     def predict(self, new_data):
         """Predicted :math:`\\hat{Y}` values for for a new dataset
