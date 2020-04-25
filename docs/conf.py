@@ -14,6 +14,8 @@
 import os
 import sys
 import datetime
+from bs4 import BeautifulSoup
+import requests
 sys.path.insert(0, os.path.abspath('..'))
 
 
@@ -25,8 +27,16 @@ author = u'Florian Felice'
 
 # The short X.Y version
 version = u''
+
 # The full version, including alpha/beta/rc tags
-release = u'1.0.16'
+source = requests.get(f'https://pypi.org/project/{project}/').text
+soup = BeautifulSoup(source, 'html') # features="lxml"
+# Find the description
+desc = soup.findAll("div", {"class": "project-description"})
+# Parse library version
+v = soup.findAll("h1", {"class": "package-header__name"})
+version = str(v[0]).split('\n')[1].split(' ')[-1]
+release = version # u'1.0.16'
 
 
 # -- General configuration ---------------------------------------------------

@@ -33,7 +33,7 @@ STATINF tries to use the least number of dependencies possible:
 
 * `pandas <https://pandas.pydata.org/>`_: used to convert data frames into arrays.
 * `numpy`_ : main library for data handling and matrix operations.
-* `scipy <https://www.scipy.org/>`_: probability density estimations.
+* `scipy <https://www.scipy.org/>`_: probability density functions.
 * `theano`_: tensor operations and back-propagation for Deep Learning models.
 * `matplotlib <https://matplotlib.org/>`_: plots of training performances.
 * `pycof <https://www.florianfelice.com/pycof>`_: basic information printing.
@@ -59,6 +59,15 @@ Ecomometrics
     econometrics/ols/ols
 
 
+Statistics
+------------
+
+.. toctree::
+
+    stats/descriptive
+    stats/tests
+
+
 Machine Learning
 ----------------
 
@@ -80,8 +89,8 @@ Deep Learning
     deeplearning/example
 
 
-Data Generation
----------------
+Data
+----
 
 .. toctree::
 

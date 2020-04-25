@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import stats
+from scipy import stats as scp
 import pandas as pd
 
 
@@ -214,7 +214,7 @@ class OLS:
         std_err_beta = np.sqrt(variance_beta)
         t_values = betas / std_err_beta
         
-        p_values = [2 * (1 - stats.t.cdf(np.abs(i), (len(X)-1))) for i in t_values]
+        p_values = [2 * (1 - scp.t.cdf(np.abs(i), (len(X)-1))) for i in t_values]
         
         summary_df = pd.DataFrame()
         summary_df["Variables"] = ['(Intercept)'] + self.X_col if self.fit_intercept else self.X_col

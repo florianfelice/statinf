@@ -5,3 +5,9 @@ Data Generation module
     :members:
     :undoc-members:
     :show-inheritance:
+
+
+.. automodule:: statinf.data.ProcessData
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -72,11 +72,13 @@ class Layer(object):
         :return: Layer to be stacked to the Neural Network
         :rtype: Layer
         """
-      
-        self.input = input
+
+        self.type = 'Dense'
         self.activation = activation
         self.f = T_activations[activation]
         self.activate = activations[activation]
+        self.n_in = n_in
+        self.n_out = n_out
 
         if W is None:
             # If weights matrix is not provided (default), initialize from a distribution
@@ -101,6 +103,10 @@ class Layer(object):
         
         # Parameters of the model
         self.params = [self.W, self.b]
+
+        # Save number of parameters
+        self.nb_params = (W_values.shape[0] * W_values.shape[1])  # Weights
+        self.nb_params += (b_values.shape[0] * b_values.shape[1])  # Bias
 
     def _feed_forward(self, input, tensor=True):
         if tensor:
@@ -188,7 +194,6 @@ class MLP:
             raise ValueError('Loss function is not valid.')
         self._cost_value += [_cost_value]
         return _cost_value
-    
 
     def get_weights(self, layer='all', param='all'):
         """Fetches the parameters from the network.
@@ -400,11 +405,19 @@ class MLP:
             plt.plot(self.train_losses, label='Training loss')
             plt.plot(self.test_losses, label='Test loss')
             plt.legend()
-            plt.show()
-    
+            plt.show()    
 
     def predict(self, new_data, binary=False, threshold=0.5):
-        """
+        """Generates output prediction after feedforward pass.
+        
+        :param new_data: Input data.
+        :type new_data: :obj:`pandas.DataFrame`
+        :param binary: Boolean for returning a binary output (not probability), defaults to False.
+        :type binary: :obj:`bool`, optional
+        :param threshold: Probability threshold for binary response, defaults to 0.5.
+        :type threshold: :obj:`float`, optional
+        :return: Predicted values.
+        :rtype: :obj:`list`
         """
         # Transform input data to be transformed into numpy array format
         x = new_data[self.X_col].values
@@ -414,3 +427,20 @@ class MLP:
             return [1. if y[0] > threshold else 0. for y in output.reshape((new_data.shape[0], 1))]
         else:
             return [y[0] for y in output.reshape((new_data.shape[0], 1))]
+
+    def summary(self):
+
+        total_params = 0
+        summ  = '+----+------------+------------+-------------+-------------------+\n'
+        summ += '| ID | Layer type | Activation | Output size | Number parameters |\n'
+        summ += '+----+------------+------------+-------------+-------------------+\n'
+        for i in range(len(self._layers)):
+            layer = self._layers[i]
+            act = layer.activation
+            params = layer.nb_params
+            total_params += params
+            summ += f'| {i:2} | {layer.type:10} | {layer.activation:10} | {pc.group(layer.n_out):11} | {pc.group(params):17} |\n'
+        summ += '+----+------------+------------+-------------+-------------------+\n'
+        summ += f'\n Total number of parameters: {pc.group(total_params)}'
+        print(summ)
+
