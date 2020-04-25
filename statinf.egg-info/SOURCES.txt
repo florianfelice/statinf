@@ -8,6 +8,7 @@ statinf.egg-info/dependency_links.txt
 statinf.egg-info/requires.txt
 statinf.egg-info/top_level.txt
 statinf/data/GenerateData.py
+statinf/data/ProcessData.py
 statinf/data/__init__.py
 statinf/ml/__init__.py
 statinf/ml/activations.py
@@ -20,3 +21,6 @@ statinf/regressions/LinearModels.py
 statinf/regressions/__init__.py
 statinf/regressions/glm.py
 statinf/regressions/glm_test.py
+statinf/stats/__init__.py
+statinf/stats/descriptive.py
+statinf/stats/tests.py
