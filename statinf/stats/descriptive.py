@@ -18,8 +18,9 @@ def var(x, std=False, df=1):
 
     :example:
 
+    >>> from statinf import stats
     >>> x = [0.023699, 0.021436, 0.0200109, 0.0202762, 0.0165271, 0.01027]
-    >>> var(x)
+    >>> stats.var(x)
     ... 2.2492979044000003e-05
 
     :return: Variance.
@@ -49,9 +50,10 @@ def cov(x, y):
 
     :example:
 
+    >>> from statinf import stats
     >>> x = [0.023699, 0.021436, 0.0200109, 0.0202762, 0.0165271, 0.01027]
     >>> y = [9.4228, 9.27951, 9.167963, 9.68820, 9.56490, 7.543]
-    >>> cov(x, y)
+    >>> stats.cov(x, y)
     ... 0.003047229298620001
 
     :return: Covariance value.
@@ -71,6 +73,7 @@ def cov(x, y):
 
 
 # ##### Pearson's correlation coefficient
+
 def pearson(x, y):
     """Compute the Pearson's coefficient correlation
 
@@ -85,9 +88,10 @@ def pearson(x, y):
 
     :example:
 
+    >>> from statinf import stats
     >>> x = [0.023699, 0.021436, 0.0200109, 0.0202762, 0.0165271, 0.01027]
     >>> y = [9.4228, 9.27951, 9.167963, 9.68820, 9.56490, 7.543]
-    >>> pearson(x, y)
+    >>> stats.pearson(x, y)
     ... 0.9750052703452801
 
     :return: Pearson's coefficient correlation.
@@ -115,9 +119,10 @@ def spearman(x, y):
 
     :example:
 
+    >>> from statinf import stats
     >>> x = [0.023699, 0.021436, 0.0200109, 0.0202762, 0.0165271, 0.01027]
     >>> y = [9.4228, 9.27951, 9.167963, 9.68820, 9.56490, 7.543]
-    >>> spearman(x, y)
+    >>> stats.spearman(x, y)
     ... 0.37142857142857144
 
     :return: Spearman's rank correlation coefficient.

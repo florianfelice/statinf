@@ -16,5 +16,12 @@ tt = stats.ttest(a, mu=30)
 print(tt)
 
 
-tt2 = stats.ttest_2samp(a, b, 0.95)
+tt2 = stats.ttest_2samp(a, b, 0.05, two_sided=True)
 print(tt2)
+
+
+ks1 = stats.kstest(a, b)
+print(ks1)
+
+ks2 = stats.kstest(np.random.normal(size=100))
+print(ks2)
