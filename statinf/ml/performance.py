@@ -6,16 +6,18 @@ import numpy as np
 class BinaryPerformance:
     def __init__(self, y_true, y_pred):
         """Gives detailed perfomance metrics for binary calssification models.
-        
+
         :param y_true: Array of true targets.
         :type y_true: :obj:`numpy.array`
         :param y_pred: Array of predicted targets.
         :type y_pred: :obj:`numpy.array`
         """
         warnings.filterwarnings('ignore')
+        true = y_true if type(y_true) == list else [x[0] for x in np.asarray(y_true)]
+        pred = y_pred if type(y_pred) == list else [x[0] for x in np.asarray(y_pred)]
         # Put data to a DF
-        for_conf = pd.DataFrame({'true': y_true,
-            'pred': y_pred,
+        for_conf = pd.DataFrame({'true': true,
+            'pred': pred,
             'perf': ''})
 
         # Compute True and False positives/negatives
@@ -40,8 +42,8 @@ class BinaryPerformance:
 
     def accuracy(self):
         """Binary accuracy of the model. Percentage of equal values between :obj:`y_true` and :obj:`y_pred`.
-        
-        :formula: .. math:: accuracy = \dfrac{TP + TN}{n}
+
+        :formula: .. math:: accuracy = \\dfrac{TP + TN}{n}
 
         :return: Accuracy
         :rtype: :obj:`float`
@@ -60,15 +62,15 @@ class BinaryPerformance:
             +-----------------+------------+------------+
             | **Predicted 1** | :math:`FP` | :math:`TP` |
             +-----------------+------------+------------+
-        
+
         :rtype: :obj:`pandas.DataFrame`
         """
         return(self.conf * 100)
 
     def precision(self):
         """Precision metric, proportion of actual 1 values amongst the ones predicted.
-        
-        :formula: .. math:: precision = \dfrac{TP}{TP + FP}
+
+        :formula: .. math:: precision = \\dfrac{TP}{TP + FP}
 
         :return: Precision
         :rtype: :obj:`float`
@@ -77,8 +79,8 @@ class BinaryPerformance:
 
     def recall(self):
         """  Recall metric, proportion of values we predicted as one from the actuals ones.
-        
-        :formula: .. math:: recall = \dfrac{TP}{TP + FN}
+
+        :formula: .. math:: recall = \\dfrac{TP}{TP + FN}
 
         :return: Recall
         :rtype: :obj:`float`
@@ -87,8 +89,8 @@ class BinaryPerformance:
 
     def F1_score(self):
         """F1-score
-        
-        :formula: .. math:: F_{1} = 2 \cdot \dfrac{precision \\times recall}{precision + recall}
+
+        :formula: .. math:: F_{1} = 2 \\cdot \\dfrac{precision \\times recall}{precision + recall}
 
         :return: F1-score
         :rtype: :obj:`float`

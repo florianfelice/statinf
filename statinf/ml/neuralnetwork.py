@@ -45,7 +45,13 @@ optimizers = {'sgd': SGD,
                 'adagrad': AdaGrad,
                 'adamax': AdaMax,
                 'rmsprop': RMSprop,
-                }
+            }
+
+losses = {'mse': mean_squared_error,
+          'mean_squared_error': mean_squared_error,
+          'bce': binary_cross_entropy,
+          'binary_cross_entropy': binary_cross_entropy,
+         }
 
 
 class Layer(object):
@@ -70,7 +76,7 @@ class Layer(object):
         :type init_bias: str, optional
 
         :return: Layer to be stacked to the Neural Network
-        :rtype: Layer
+        :rtype: :obj:`Layer`
         """
 
         self.type = 'Dense'
@@ -186,12 +192,12 @@ class MLP:
     def _cost(self, x, y):
         output = self._forward_prop(x)
         # Compute loss
-        if self.loss.lower() in ['mse', 'mean_squared_error']:
-            _cost_value = mean_squared_error(y_true=y, y_pred=output) # ((output - y) ** 2).sum()
-        elif self.loss.lower() in ['binary_cross_entropy', 'bce']:
-            _cost_value = binary_cross_entropy(y_true=y, y_pred=output)
-        else:
-            raise ValueError('Loss function is not valid.')
+        try:
+            _cost_value = losses[self.loss.lower()](y_true=y, y_pred=output)
+        except BaseException:
+            posible_loss = "', '".join([i for i in losses.keys()])
+            raise ValueError(f"Loss function is not valid. Got '{self.loss.lower()}'. Please make sure you choose in '{posible_loss}'.")
+
         self._cost_value += [_cost_value]
         return _cost_value
 
@@ -204,7 +210,7 @@ class MLP:
         :type param: str, optional
         
         :return: Weights and Bias used in the Neural Network.
-        :rtype: dict
+        :rtype: :obj:`dict`
         """
         # Check what parameter the user was to get
         if param.lower() in ['weights', 'w', 'weight']:
@@ -252,7 +258,7 @@ class MLP:
         :type epochs: int, optional
         :param optimizer: Algortihm to use to minimize the loss function, defaults to 'SGD' (see `optimizers <optimizers.html>`_).
         :type optimizer: str, optional
-        :param batch_size: Size of each batch to be trained, defaults to 1.
+        :param batch_size: Size of each batch to be trained (only online learning is currently available, batch_size=1), defaults to 1.
         :type batch_size: int, optional
         :param training_size: Ratio of the data to be used for training set (:math:`\in (0, 1)`) the remainder is used for test set, defaults to 0.8.
         :type training_size: float, optional
@@ -300,29 +306,26 @@ class MLP:
             train_index = random.sample(data_idx, int(self.data_size * training_size))
             test_index = [i for i in data_idx if i not in train_index]
             # Train set
-            train_set_x = data.loc[train_index, self.X_col]
-            train_set_y = data.loc[train_index, self.Y_col]
+            train_set_x = data.loc[train_index, self.X_col].values
+            n_train_set = train_set_x.shape[0]
+            train_set_y = np.reshape(data.loc[train_index, self.Y_col].values, n_train_set)
             # Test set
-            test_set_x = data.loc[test_index, self.X_col]
-            test_set_y = data.loc[test_index, self.Y_col]
+            test_set_x = data.loc[test_index, self.X_col].values
+            n_test_set = test_set_x.shape[0]
+            test_set_y = np.reshape(data.loc[test_index, self.Y_col].values, n_test_set)
         else:
             # Train set
-            train_set_x = data[self.X_col]
-            train_set_y = data[self.Y_col]
+            train_set_x = data[self.X_col].values
+            n_train_set = train_set_x.shape[0]
+            train_set_y = np.reshape(data[self.Y_col].values, n_train_set)
             # Test set
-            test_set_x = test_set[self.X_col]
-            test_set_y = test_set[self.Y_col]
-        
-        # Set data to theano
-        # Train set
-        train_set_x = theano.shared(np.array(train_set_x, dtype=theano.config.floatX))
-        train_set_y = theano.shared(np.array(train_set_y, dtype=theano.config.floatX))
-        # Test set
-        test_set_x = theano.shared(np.array(test_set_x, dtype=theano.config.floatX))
-        test_set_y = theano.shared(np.array(test_set_y, dtype=theano.config.floatX))
-        self.test_set = test_set_x
+            test_set_x = test_set[self.X_col].values
+            n_test_set = test_set_x.shape[0]
+            test_set_y = np.reshape(test_set[self.Y_col].values, n_test_set)
 
-        index = T.lscalar()  # index to a [mini]batch
+        # Set Theano variables
+        # x = T.matrix('x')
+        # y = T.vector('y')
         x = T.vector('x')
         y = T.scalar('y')
 
@@ -337,41 +340,40 @@ class MLP:
             self.updates = optimizers[self.optimizer](params=self.params, learning_rate=self.learning_rate).updates(cost)
         except BaseException:
             posible_opt = "', '".join([i for i in optimizers.keys()])
-            raise ValueError(f"Optimizer not value. Please make sure you choose in '{posible_opt}'. Got '{self.optimizer}'.")
+            raise ValueError(f"Optimizer not value. Got '{self.optimizer}'. Please make sure you choose in '{posible_opt}'.")
  
         # Define Theano function for training step
-        train_model = theano.function(
-            inputs=[index],
+        new_train_model = theano.function(
+            inputs=[x, y],
             outputs=cost,
-            updates=self.updates,
-            givens={x: train_set_x[index], y: train_set_y[index]}
+            updates=self.updates
         )
         
         # Define Theano function for validation step
-        validate_model = theano.function(
-            inputs=[index],
-            outputs=cost,
-            givens={x: test_set_x[index], y: test_set_y[index]}
+        new_validate_model = theano.function(
+            inputs=[x, y],
+            outputs=cost
         )
-        # Define length of test
-        n_train_set = train_set_x.get_value(borrow=True).shape[0]
-        n_test_set = test_set_x.get_value(borrow=True).shape[0]
+        
+        # Compute number of batches to learn from
+        n_train_batches = n_train_set // batch_size
+        n_test_batches = n_test_set // batch_size
         
         # Initialize values
-        self.train_losses = []       # Training loss vector to plot
-        self.test_losses = []        # Test loss vector to plot
+        self.train_losses = []  # Training loss vector to plot
+        self.test_losses = []   # Test loss vector to plot
         self.best_loss = np.inf # Initial best loss value
-        self.best_iter = 0
+        self.best_iter = 1
         verif_i = epochs        # First, verify epoch at then end (init only)
-        i = 0
+        i = 1
 
         # Start training
         while i <= epochs:
             i += 1
-            # Measure accuracy on train set
-            epoch_loss = np.mean([train_model(i) for i in range(n_train_set)])
+            # Learn from train set
+            epoch_loss = np.mean([new_train_model(train_set_x[i], train_set_y[i]) for i in range(n_train_set)])
             # Evaluate on test set
-            epoch_loss_test = np.mean([validate_model(i).tolist() for i in range(n_test_set)])
+            epoch_loss_test = np.mean([new_validate_model(test_set_x[i], test_set_y[i]) for i in range(n_test_set)])
             # Save to historical performance
             self.train_losses += [epoch_loss]
             self.test_losses += [epoch_loss_test]
@@ -381,8 +383,6 @@ class MLP:
                 verif_i = i + patience
                 self.best_loss = epoch_loss_test
                 self.best_iter = i
-                # self.optimal_w = self.w.get_value()
-                # self.optimal_b = self.b.get_value()
                 for layer in self._layers:
                     layer.optimal_w = layer.W.get_value()
                     layer.optimal_b = layer.b.get_value()
@@ -416,6 +416,7 @@ class MLP:
         :type binary: :obj:`bool`, optional
         :param threshold: Probability threshold for binary response, defaults to 0.5.
         :type threshold: :obj:`float`, optional
+        
         :return: Predicted values.
         :rtype: :obj:`list`
         """
@@ -429,6 +430,12 @@ class MLP:
             return [y[0] for y in output.reshape((new_data.shape[0], 1))]
 
     def summary(self):
+        """Generates a summary of the architecture of the network.
+        Gives details on layers, activations and number of parameters to be estimated.
+
+        :return: Graph summary of the network.
+        :rtype: :obj:`str`
+        """
 
         total_params = 0
         summ  = '+----+------------+------------+-------------+-------------------+\n'

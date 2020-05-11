@@ -1,4 +1,4 @@
-
+import numpy as np
 
 def rankdata(x):
     """Assigns rank to data.

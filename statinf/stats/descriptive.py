@@ -56,6 +56,8 @@ def cov(x, y):
     >>> stats.cov(x, y)
     ... 0.003047229298620001
 
+    :reference: * DeGroot, M. H., & Schervish, M. J. (2012). Probability and statistics. Pearson Education.
+
     :return: Covariance value.
     :rtype: :obj:`float`
     """
@@ -93,6 +95,8 @@ def pearson(x, y):
     >>> y = [9.4228, 9.27951, 9.167963, 9.68820, 9.56490, 7.543]
     >>> stats.pearson(x, y)
     ... 0.9750052703452801
+
+    :reference: * DeGroot, M. H., & Schervish, M. J. (2012). Probability and statistics. Pearson Education.
 
     :return: Pearson's coefficient correlation.
     :rtype: :obj:`float`
