@@ -13,8 +13,35 @@ class BinaryPerformance:
         :type y_pred: :obj:`numpy.array`
         """
         warnings.filterwarnings('ignore')
-        true = y_true if type(y_true) == list else [x[0] for x in np.asarray(y_true)]
-        pred = y_pred if type(y_pred) == list else [x[0] for x in np.asarray(y_pred)]
+        # Format y_true
+        if type(y_true) == pd.Series:
+            true = list(y_true.values)
+        elif type(y_true) == list:
+            true = y_true
+        elif type(y_true) == np.ndarray:
+            if y_true.shape == (len(y_true), 1):
+                true = [x[0] for x in np.asarray(y_true)]
+            elif y_true.shape == (len(y_true),):
+                true = list(y_true)
+            else:
+                raise TypeError('Cannot properly read shape for y_true.')
+        else:
+            raise TypeError('Type for y_true is not valid.')
+        # Format y_pred
+        if type(y_pred) == pd.Series:
+            pred = list(y_pred.values)
+        elif type(y_pred) == list:
+            pred = y_pred
+        elif type(y_pred) == np.ndarray:
+            if y_pred.shape == (len(y_pred), 1):
+                pred = [x[0] for x in np.asarray(y_pred)]
+            elif y_pred.shape == (len(y_pred),):
+                pred = list(y_pred)
+            else:
+                raise TypeError('Cannot properly read shape for y_pred.')
+        else:
+            raise TypeError('Type for y_pred is not valid.')
+
         # Put data to a DF
         for_conf = pd.DataFrame({'true': true,
             'pred': pred,

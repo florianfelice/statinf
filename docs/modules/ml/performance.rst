@@ -18,7 +18,7 @@ Example
     from statinf.ml.performance import BinaryPerformance
 
     ## Load the performance class
-    perf = BinaryPerformance(y_true=data[Y].values, y_pred=predicted)
+    perf = BinaryPerformance(y_true=data[Y], y_pred=predicted)
 
     ## Model accuracy
     print(perf.accuracy())

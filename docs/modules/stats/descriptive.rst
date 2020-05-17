@@ -1,5 +1,5 @@
-Descriptive statistics module
-=============================
+Descriptive statistics
+======================
 
 .. automodule:: statinf.stats.descriptive
     :members:

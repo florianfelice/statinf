@@ -18,46 +18,46 @@ DeepLearning website - Yoshua Bengio:
 - http://deeplearning.net/tutorial/mlp.html
 """
 
-## TODO: add batch
-## TODO: comment out
+# TODO: add batch
+# TODO: comment out
 
 T_activations = {None: None,
-                'linear': None,
-                'tanh': T.tanh,
-                'sigmoid': T.nnet.sigmoid,
-                'relu': T.nnet.relu,
-                'softplus': T.nnet.softplus,
-                }
+                 'linear': None,
+                 'tanh': T.tanh,
+                 'sigmoid': T.nnet.sigmoid,
+                 'relu': T.nnet.relu,
+                 'softplus': T.nnet.softplus,
+                 }
 
 activations = {None: None,
-                'linear': None,
-                'tanh': tanh,
-                'sigmoid': sigmoid,
-                'relu': relu,
-                'softplus': softplus,
-                }
+               'linear': None,
+               'tanh': tanh,
+               'sigmoid': sigmoid,
+               'relu': relu,
+               'softplus': softplus,
+               }
 
 optimizers = {'sgd': SGD,
-                'stochastic_gradient_descent': SGD,
-                'momentum': MomentumSGD,
-                'momentumsgd': MomentumSGD,
-                'adam': Adam,
-                'adagrad': AdaGrad,
-                'adamax': AdaMax,
-                'rmsprop': RMSprop,
-            }
+              'stochastic_gradient_descent': SGD,
+              'momentum': MomentumSGD,
+              'momentumsgd': MomentumSGD,
+              'adam': Adam,
+              'adagrad': AdaGrad,
+              'adamax': AdaMax,
+              'rmsprop': RMSprop,
+              }
 
 losses = {'mse': mean_squared_error,
           'mean_squared_error': mean_squared_error,
           'bce': binary_cross_entropy,
           'binary_cross_entropy': binary_cross_entropy,
-         }
+          }
 
 
 class Layer(object):
     def __init__(self, n_in, n_out, W=None, b=None, activation=None, seed=None, init_weights='xavier', init_bias='zeros'):
         """Fully connected Neural Network layer
-        
+
         :param n_in: Dimension of the input layer (number of rows for the weights matrix).
         :type n_in: int
         :param n_out: Dimension of the output layer (number of columns for the weights matrix).
@@ -100,13 +100,13 @@ class Layer(object):
             b_values = init_params(rows=1, cols=n_out, method=init_bias, seed=seed)
         elif b.shape == (n_in, n_out):
             raise ValueError(f'Weights dimension does not match. Dimension for b should be {(1, n_out)} and got {b.shape}.')
-        
+
         # Store parameters in the class as shared parameters with theano
         self.W = theano.shared(value=W_values, name='W', borrow=True)
         self.b = theano.shared(value=b_values, name='b', borrow=True)
         self.optimal_w = W_values
         self.optimal_b = b_values
-        
+
         # Parameters of the model
         self.params = [self.W, self.b]
 
@@ -126,9 +126,9 @@ class Layer(object):
 
 class MLP:
     """Multi-Layer Perceptron
-    
+
     :references: Rosenblatt, F. (1958). `The perceptron: a probabilistic model for information storage and organization in the brain <http://web.engr.oregonstate.edu/~huanlian/teaching/machine-learning/2017fall/extra/rosenblatt-1958.pdf>`_. Psychological review, 65(6), 386.
-    
+
     """
     def __init__(self, loss='MSE', random=None):
         self.loss = loss
@@ -140,8 +140,8 @@ class MLP:
 
     def _L1(self):
         """Compute L1 regularization
-        
-        :formula: .. math:: L_{1} = \sum_{i=1}^{L} |\\beta|
+
+        :formula: .. math:: L_{1} = \\sum_{i=1}^{L} |\\beta|
 
         :return: L1 penalty
         :rtype: float
@@ -151,11 +151,11 @@ class MLP:
             # be small
             self.L1 += abs(layer.W).sum()
         return self.L1
-    
+
     def _L2(self):
         """Compute L2 regularization
-        
-        :formula: .. math:: L_{2} = \sum_{i=1}^{L} \\beta^{2}
+
+        :formula: .. math:: L_{2} = \\sum_{i=1}^{L} \\beta^{2}
 
         :return: L2 penalty
         :rtype: float
@@ -165,24 +165,24 @@ class MLP:
             # square of L2 norm to be small
             self.L2 += (layer.W ** 2).sum()
         return self.L2
-    
+
     def _params(self):
         # the parameters of the model are the parameters of the two layer it is
         # made out of
         _params = []
         for layer in self._layers:
             _params += list(layer.params)
-        
+
         self.params = list(_params)
-    
+
     def add(self, layer):
         """Stack layer to Neural Network
-        
+
         :param layer: Layer to be stacked
         :type layer: :func:`~Layer`
         """
         self._layers.append(layer)
-    
+
     def _forward_prop(self, x, tensor=True):
         output = x
         for layer in self._layers:
@@ -203,12 +203,12 @@ class MLP:
 
     def get_weights(self, layer='all', param='all'):
         """Fetches the parameters from the network.
-        
+
         :param layer: Layer id from which to fetch the parameters, defaults to 'all'
         :type layer: int, optional
         :param param: What parameter we need to fetch (can either be 'weights', 'bias' or 'all'), defaults to 'all'
         :type param: str, optional
-        
+
         :return: Weights and Bias used in the Neural Network.
         :rtype: :obj:`dict`
         """
@@ -221,7 +221,7 @@ class MLP:
             par = 2
         else:
             raise ValueError('Value for "param" is not value. Please chose between "weights", "bias" or "all".')
-        
+
         if layer == 'all':
             # If user wants to see all layers, we create a dictionnary
             weights = {}
@@ -242,12 +242,12 @@ class MLP:
                 weights = self._layers[layer].Z.get_value()
         else:
             raise ValueError(f'Layer is incorrect. Please chose either "all" or layer <= {len(self._layers) - 1}. Got layer = {layer}')
-        
+
         return weights
 
     def train(self, data, X, Y='Y', epochs=100, optimizer='SGD', batch_size=1, training_size=0.8, test_set=None, learning_rate=0.01, L1_reg=0., L2_reg=0., early_stop=True, patience=10, improvement_threshold=0.995, restore_weights=True, verbose=True, verbose_all=False, plot=False):
         """Train the Neural Network.
-        
+
         :param data: Layer id from which to fetch the parameters.
         :type data: pandas.DataFrame
         :param X: List of X input variables.
@@ -260,15 +260,15 @@ class MLP:
         :type optimizer: str, optional
         :param batch_size: Size of each batch to be trained (only online learning is currently available, batch_size=1), defaults to 1.
         :type batch_size: int, optional
-        :param training_size: Ratio of the data to be used for training set (:math:`\in (0, 1)`) the remainder is used for test set, defaults to 0.8.
+        :param training_size: Ratio of the data to be used for training set (:math:`\\in (0, 1)`) the remainder is used for test set, defaults to 0.8.
         :type training_size: float, optional
         :param test_set: Data frame to use as test set (overrides **training_size** if provided), defaults to None.
         :type test_set: pandas.DataFrame, optional
         :param learning_rate: Learning rate (step size) for gradient descent, defaults to 0.01.
         :type learning_rate: float, optional
-        :param L1_reg: Coefficient :math:`\\lambda_{1} \in (0,1)` for the L1 penalty, defaults to 0.
+        :param L1_reg: Coefficient :math:`\\lambda_{1} \\in (0,1)` for the L1 penalty, defaults to 0.
         :type L1_reg: float, optional
-        :param L2_reg: Coefficient :math:`\\lambda_{2} \in (0,1)` for the L2 penalty, defaults to 0.
+        :param L2_reg: Coefficient :math:`\\lambda_{2} \\in (0,1)` for the L2 penalty, defaults to 0.
         :type L2_reg: float, optional
         :param early_stop: Apply early-stopping method to avoid over-fitting. Stop the training sequence after the patience (see below) with no improvement, defaults to True.
         :type early_stop: bool, optional
@@ -283,9 +283,9 @@ class MLP:
         :param plot: Plot the evolution of the training and test loss for each epoch, defaults to False.
         :type plot: bool, optional
 
-        :references: * Bergstra, J., Bastien, F., Breuleux, O., Lamblin, P., Pascanu, R., Delalleau, O., ... & Bengio, Y. (2011). `Theano: Deep learning on gpus with python <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.678.1889&rep=rep1&type=pdf>`_. In NIPS 2011, BigLearning Workshop, Granada, Spain (Vol. 3, pp. 1-48). Microtome Publishing. 
+        :references: * Bergstra, J., Bastien, F., Breuleux, O., Lamblin, P., Pascanu, R., Delalleau, O., ... & Bengio, Y. (2011). `Theano: Deep learning on gpus with python <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.678.1889&rep=rep1&type=pdf>`_. In NIPS 2011, BigLearning Workshop, Granada, Spain (Vol. 3, pp. 1-48). Microtome Publishing.
             * Friedman, J., Hastie, T., & Tibshirani, R. (2001). `The elements of statistical learning <https://web.stanford.edu/~hastie/Papers/ESLII.pdf>`_ (Vol. 1, No. 10). New York: Springer series in statistics.
-            * Goodfellow, I., Bengio, Y., & Courville, A. (2016). `Deep learning <https://www.deeplearningbook.org/>`_. MIT press. 
+            * Goodfellow, I., Bengio, Y., & Courville, A. (2016). `Deep learning <https://www.deeplearningbook.org/>`_. MIT press.
         """
         # Parse arguments to pass to self
         self.learning_rate = learning_rate
@@ -334,37 +334,37 @@ class MLP:
 
         # Set cost
         cost = self._cost(x, y) + (self.L1_reg * self._L1()) + (self.L2_reg * self._L2())
-        
-        ## Define update with optimizer
+
+        # Define update with optimizer
         try:
             self.updates = optimizers[self.optimizer](params=self.params, learning_rate=self.learning_rate).updates(cost)
         except BaseException:
             posible_opt = "', '".join([i for i in optimizers.keys()])
             raise ValueError(f"Optimizer not value. Got '{self.optimizer}'. Please make sure you choose in '{posible_opt}'.")
- 
+
         # Define Theano function for training step
         new_train_model = theano.function(
             inputs=[x, y],
             outputs=cost,
             updates=self.updates
         )
-        
+
         # Define Theano function for validation step
         new_validate_model = theano.function(
             inputs=[x, y],
             outputs=cost
         )
-        
+
         # Compute number of batches to learn from
         n_train_batches = n_train_set // batch_size
         n_test_batches = n_test_set // batch_size
-        
+
         # Initialize values
-        self.train_losses = []  # Training loss vector to plot
-        self.test_losses = []   # Test loss vector to plot
-        self.best_loss = np.inf # Initial best loss value
+        self.train_losses = []   # Training loss vector to plot
+        self.test_losses = []    # Test loss vector to plot
+        self.best_loss = np.inf  # Initial best loss value
         self.best_iter = 1
-        verif_i = epochs        # First, verify epoch at then end (init only)
+        verif_i = epochs         # First, verify epoch at then end (init only)
         i = 1
 
         # Start training
@@ -405,18 +405,18 @@ class MLP:
             plt.plot(self.train_losses, label='Training loss')
             plt.plot(self.test_losses, label='Test loss')
             plt.legend()
-            plt.show()    
+            plt.show()
 
     def predict(self, new_data, binary=False, threshold=0.5):
         """Generates output prediction after feedforward pass.
-        
+
         :param new_data: Input data.
         :type new_data: :obj:`pandas.DataFrame`
         :param binary: Boolean for returning a binary output (not probability), defaults to False.
         :type binary: :obj:`bool`, optional
         :param threshold: Probability threshold for binary response, defaults to 0.5.
         :type threshold: :obj:`float`, optional
-        
+
         :return: Predicted values.
         :rtype: :obj:`list`
         """
@@ -438,7 +438,7 @@ class MLP:
         """
 
         total_params = 0
-        summ  = '+----+------------+------------+-------------+-------------------+\n'
+        summ = '+----+------------+------------+-------------+-------------------+\n'
         summ += '| ID | Layer type | Activation | Output size | Number parameters |\n'
         summ += '+----+------------+------------+-------------+-------------------+\n'
         for i in range(len(self._layers)):
@@ -450,4 +450,3 @@ class MLP:
         summ += '+----+------------+------------+-------------+-------------------+\n'
         summ += f'\n Total number of parameters: {pc.group(total_params)}'
         print(summ)
-

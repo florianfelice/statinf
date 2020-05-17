@@ -62,7 +62,7 @@ def ttest(x, mu=0, alpha=0.05, is_bernoulli=False, two_sided=True, return_tuple=
 
     # Define test degrees of freedom
     if two_sided:
-        quant_order = 1 - (alpha/2)
+        quant_order = 1 - (alpha / 2)
         h0 = f'H0: X_bar = {mu}'
     else:
         quant_order = 1 - alpha
@@ -85,7 +85,7 @@ def ttest(x, mu=0, alpha=0.05, is_bernoulli=False, two_sided=True, return_tuple=
     df = n - 1
 
     # T statistic
-    t = (x_bar - mu)/(math.sqrt(s2/n))
+    t = (x_bar - mu) / (math.sqrt(s2 / n))
     if two_sided:
         t = math.fabs(t)
     # p and critical values
@@ -141,7 +141,7 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=F
 
             * :math:`t \\sim \\mathcal{T}_{n_{1} + n_{2} - 2}`, if :math:`\\mathbf{X} \\sim \\mathcal{N}(\\mu_{X}, \\sigma^{2}_{X})` and :math:`\\mathbf{Y} \\sim \\mathcal{N}(\\mu_{Y}, \\sigma^{2}_{Y})`
             * :math:`t \\sim \\mathcal{N}(0, 1)`, if :math:`n_{1} \\gg 30` and :math:`n_{2} \\gg 30`
-        
+
         If samples are paired:
 
         .. math:: H_{0}: \\bar{X}_{1} = \\bar{X}_{2} \\Leftrightarrow \\bar{X}_{1} - \\bar{X}_{2} = 0 \\Leftrightarrow \\bar{X}_{D} = 0
@@ -191,7 +191,7 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=F
 
     # Define test degrees of freedom
     if two_sided:
-        quant_order = 1 - (alpha/2)
+        quant_order = 1 - (alpha / 2)
         h0 = f'H0: X1 = X2'
         nb_side = 'two'
     else:
@@ -303,7 +303,7 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
     ... +------------+----------------+------------+---------+-------+
     ... |       0.09 |  1.35809863932 |  0.6363961 | 0.81275 | True  |
     ... +------------+----------------+------------+---------+-------+
-    ...  * We cannot reject the hypothesis H0: F(x) ~ normal 
+    ...  * We cannot reject the hypothesis H0: F(x) ~ normal
     ...  * Confidence level is 95.0%, we need p > 0.05
 
     :reference: * DeGroot, M. H., & Schervish, M. J. (2012). Probability and statistics. Pearson Education.
@@ -348,12 +348,12 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
     y_sort = np.sort(y)
     concat_data = np.concatenate([x_sort, y_sort])
     # Build sort distributions to compute the max deviance
-    cdf1 = np.searchsorted(x_sort, concat_data, side='right')/float(n)
-    cdf2 = (np.searchsorted(y_sort, concat_data, side='right'))/float(m)
+    cdf1 = np.searchsorted(x_sort, concat_data, side='right') / float(n)
+    cdf2 = (np.searchsorted(y_sort, concat_data, side='right')) / float(m)
     # Find the max deviance
     d = np.max(np.absolute(cdf1 - cdf2))
     # Compute K value
-    k = d * math.sqrt((n * m)/(n + m))
+    k = d * math.sqrt((n * m) / (n + m))
     cv = scp.kstwobign.ppf(quant_order)
     p = 1.0 - scp.kstwobign.cdf(math.fabs(k))
 
@@ -363,12 +363,12 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
     k_val = round(k, 8 - len(str(int(k))))
     p_v = round(p, 6 - len(str(int(p))))
     r = 'True' if k < cv else 'False'
-    
+
     if k < cri_value:
         conclusion = f' * We cannot reject the hypothesis {h0} \n'
     else:
         conclusion = f' * We reject the hypothesis {h0} \n'
-    
+
     # Test summary
     summ = f"+------------------------------------------------------------+\n"
     summ += "|                   Kolmogorov-Smirnov test                  |\n"
@@ -379,7 +379,7 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
     summ += f"+------------+----------------+------------+---------+-------+\n"
     summ += conclusion
     summ += f" * Confidence level is {(1 - alpha)*100}%, we need p > {round(1 - quant_order, 3)}\n"
-    
+
     if return_tuple:
         return k, cv, p
     else:

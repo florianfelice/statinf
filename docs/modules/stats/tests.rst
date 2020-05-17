@@ -1,5 +1,5 @@
-Statistical tests module
-========================
+Statistical tests
+=================
 
 .. automodule:: statinf.stats.tests
     :members:

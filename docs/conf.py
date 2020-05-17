@@ -30,13 +30,13 @@ version = u''
 
 # The full version, including alpha/beta/rc tags
 source = requests.get(f'https://pypi.org/project/{project}/').text
-soup = BeautifulSoup(source, 'html') # features="lxml"
+soup = BeautifulSoup(source, features="lxml") # features="lxml"
 # Find the description
 desc = soup.findAll("div", {"class": "project-description"})
 # Parse library version
 v = soup.findAll("h1", {"class": "package-header__name"})
 version = str(v[0]).split('\n')[1].split(' ')[-1]
-release = version # u'1.0.16'
+release = version  # u'1.0.16'
 
 
 # -- General configuration ---------------------------------------------------

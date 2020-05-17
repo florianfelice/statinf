@@ -60,9 +60,9 @@ def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', bi
     df = pd.DataFrame(X.T)
     # Assign column names
     for col in df.columns:
-        df.rename(columns = {col: 'X' + str(col)}, inplace=True)
+        df.rename(columns={col: 'X' + str(col)}, inplace=True)
     
     # Append Y
-    df['Y'] = y
+    df.loc[:, 'Y'] = y
     #
     return df

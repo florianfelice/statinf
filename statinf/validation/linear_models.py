@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-import os, sys
+import os
+import sys
 import getpass
 
 sys.path.append(f"/Users/{getpass.getuser()}/Documents/statinf/")
@@ -10,26 +11,12 @@ sys.path.append(f"/Users/{getpass.getuser()}/Documents/PYCOF/")
 import pycof as pc
 from statinf.regressions import OLS
 from statinf.data.GenerateData import generate_dataset
+from statinf.data.ProcessData import parse_formula
 from statinf.ml.neuralnetwork import MLP, Layer
 from statinf.ml.losses import mean_squared_error
 
-
 # General parameters
 n = 2500
-
-
-##########################################
-
-print('############## ANN Summary test ###############')
-
-nn_test_summ = MLP(loss='mse')
-nn_test_summ.add(Layer(90, 50, activation='linear'))
-nn_test_summ.add(Layer(50, 70, activation='tanh'))
-nn_test_summ.add(Layer(70, 40, activation='softplus'))
-nn_test_summ.add(Layer(10, 10, activation='relu'))
-nn_test_summ.add(Layer(10, 1, activation='linear'))
-
-nn_test_summ.summary()
 
 
 ##########################################
@@ -56,16 +43,16 @@ appli = data.iloc[2001:n]
 
 print('\n=== TEST OLS ===\n')
 
-formula = "Y ~ " + ' + '.join(X_lin)
+formula = "Y ~ " + ' + '.join(X_lin) + '+X1*X2+ exp(X2)'
 ols = OLS(formula, train, fit_intercept=False)
 
-pred_ols = ols.predict(appli)
+pred_ols = ols.predict(appli, conf_level=.95)
+# print(pred_ols)
 
-print(f"RMSE for OLS is: {mean_squared_error(y_true=appli['Y'], y_pred=pred_ols, root=True)}")
+print(f"RMSE for OLS is: {mean_squared_error(y_true=appli['Y'], y_pred=pred_ols.Prediction.values, root=True)}")
 
 print('Model summary')
 print(ols.summary())
-
 
 
 ##########################################
@@ -87,3 +74,16 @@ print(nn.get_weights())
 
 
 ##########################################
+
+print('##############################################')
+print('############## NON-LINEAR DATA ###############')
+print('##############################################')
+
+nn_test_summ = MLP(loss='mse')
+nn_test_summ.add(Layer(90, 50, activation='linear'))
+nn_test_summ.add(Layer(50, 70, activation='tanh'))
+nn_test_summ.add(Layer(70, 40, activation='softplus'))
+nn_test_summ.add(Layer(10, 10, activation='relu'))
+nn_test_summ.add(Layer(10, 1, activation='linear'))
+
+nn_test_summ.summary()

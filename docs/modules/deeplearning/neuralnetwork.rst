@@ -1,5 +1,5 @@
-Neural Network Module
-=====================
+Neural Network
+==============
 
 .. automodule:: statinf.ml.neuralnetwork
     :members:

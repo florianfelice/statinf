@@ -48,19 +48,20 @@ Indices and tables
 
 
 
-Documentation content
-=====================
+Modules available
+=================
 
 Ecomometrics
 ------------
 
 .. toctree::
 
-    econometrics/ols/ols
+    econometrics/ols
+    econometrics/glm
 
 
 Statistics
-------------
+----------
 
 .. toctree::
 
@@ -94,7 +95,17 @@ Data
 
 .. toctree::
 
-    data/data
+    data/generate
+    data/process
+
+
+Release and FAQ
+===============
+
+.. toctree::
+
+   updates/release
+   updates/faq
 
 
 .. _numpy: https://numpy.org/
