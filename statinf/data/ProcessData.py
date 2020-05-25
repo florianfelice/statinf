@@ -223,8 +223,7 @@ def OneHotEncoding(dataset, columns, drop=True, verbose=False):
         ... |  5 | Female |        A |  26 |
         ... +----+--------+----------+-----+
         >>> # Encoding columns "Gender" and "Category"
-        >>> new_df = OneHotEncoding(df, column="Gender")
-        >>> new_df = OneHotEncoding(new_df, column="Category")
+        >>> new_df = OneHotEncoding(df, columns=["Gender", "Category"])
         >>> print(new_df)
         ... +----+---------------+------------+------------+-----+
         ... | Id | Gender_Female | Category_A | Category_B | Age |
@@ -240,7 +239,9 @@ def OneHotEncoding(dataset, columns, drop=True, verbose=False):
     :rtype: :obj:`pandas.DataFrame`
     """
 
-    for column in columns:
+    cols = [columns] if type(columns) == str else columns
+
+    for column in cols:
         # Get all values from the column
         all_values = dataset[column].unique()
 
@@ -248,11 +249,11 @@ def OneHotEncoding(dataset, columns, drop=True, verbose=False):
         for val in all_values:
             if verbose:
                 print('Encoding for value: ' + str(val))
-            dataset[column + '_' + str(val)] = 0
-            dataset[column + '_' + str(val)][dataset[column] == val] = 1
+            dataset.loc[:, column + '_' + str(val)] = 0
+            dataset.loc[dataset[column] == val, column + '_' + str(val)] = 1
 
-    if drop:
-        dataset.drop(columns=[columns], inplace=True)
+        if drop:
+            dataset.drop(columns=[column], inplace=True)
     return(dataset)
 
 

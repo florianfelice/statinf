@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: statinf
-Version: 1.0.23
+Version: 1.0.24
 Summary: A library for statistics and causal inference
 Home-page: https://github.com/florianfelice/statinf
 Author: Florian Felice
@@ -29,12 +29,36 @@ Description: # STATINF
         
         You can find the full documentation at [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
         
+        You can also find an [FAQ](https://www.florianfelice.com/statinf/updates/faq.html?orgn=github) and the [latest news](https://www.florianfelice.com/statinf/updates/release.html?orgn=github) of the library on the [documentation](https://www.florianfelice.com/statinf?orgn=github).
         
-        ## 3. Regressions
+        
+        ## 3. Available modules
+        
+        Here is a non-exhaustive list of available modules on `statinf`:
+        
+        1. `MLP` implements MultiLayer Perceptron
+        (see [MLP](https://www.florianfelice.com/statinf/deeplearning/neuralnetwork.html?orgn=github) for more details and examples).
+        
+        1. `OLS` allows to use Ordinary Least Squares for linear regressions
+        (see [OLS](https://www.florianfelice.com/statinf/econometrics/ols.html?orgn=github) for more details and examples).
+        
+        1. `GLM` implements the Generalized Linear Models 
+        see [GLM](https://www.florianfelice.com/statinf/econometrics/glm.html?orgn=github) for more details and examples).
+        
+        1. `stats` allows to use [descriptive](https://www.florianfelice.com/statinf/stats/tests.html?orgn=github) and
+        [tests](https://www.florianfelice.com/statinf/stats/descriptive.html?orgn=github) statistics.
+        
+        1. `data` is a module to process data such as [data generation](https://www.florianfelice.com/statinf/data/generate.html#statinf.data.GenerateData.generate_dataset?orgn=github),
+        [One Hot Encoding](https://www.florianfelice.com/statinf/data/process.html#statinf.data.ProcessData.OneHotEncoding?orgn=github) and others
+        (see [data processing](https://www.florianfelice.com/statinf/data/process.html?orgn=github) or (see [data generation](https://www.florianfelice.com/statinf/data/generate.html?orgn=github) modules for more details).
+        
         
         You can find the below examples and many more on [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
+        Stay tuned with the future [releases](https://www.florianfelice.com/statinf/updates/release.html?orgn=github).
         
-        ### 3.1. OLS
+        
+        
+        ### 3.1. [OLS](https://www.florianfelice.com/statinf/econometrics/ols.html?orgn=github)
         
         `statinf` comes with the OLS regression implemented with the analytical formula:
         
@@ -43,39 +67,46 @@ Description: # STATINF
         
         
         ```python
-        from statinf.regressions.LinearModels import OLS
-        from statinf.data.GenerateData import generate_dataset
+        from statinf.regressions import OLS
+        from statinf.data import generate_dataset
         
         # Generate a synthetic dataset
-        data = generate_dataset(coeffs=[1.2556, -6.465, 1.665414, 1.5444], n=1000, std_dev=1.6)
+        data = generate_dataset(coeffs=[1.2556, -0.465, 1.665414, 2.5444, -7.56445], n=1000, std_dev=1.6)
         
         # We set the OLS formula
-        formula = "Y ~ X0 + X1 + X2 + X3"
+        formula = "Y ~ X0 + X1 + X2 + X3 + X4 + X1*X2 + exp(X2)"
         # We fit the OLS with the data, the formula and without intercept
         ols = OLS(formula, df, fit_intercept=True)
         
         ols.summary()
         ```
         
-        The output:
+        The output will be:
         
         ```bash
-        =========================================================================
-                                       OLS summary                               
-        =========================================================================
-        | R² = 0.99129                  | Adjusted-R² = 0.99126
-        | n  =   1000                   | p =     4
-        | Fisher = 37790.52477                         
-        =========================================================================
-        Variables  Coefficients  Standard Errors    t values  Probabilites
-               X0      1.234759         0.020300   60.824688           0.0
-               X1     -6.475338         0.009052 -715.327289           0.0
-               X2      1.662661         0.020141   82.552778           0.0
-               X3      1.519622         0.020319   74.787592           0.0
+        ==================================================================================
+        |                                  OLS summary                                   |
+        ==================================================================================
+        | R²             =            0.98475 | R² Adj.      =                   0.98464 |
+        | n              =                999 | p            =                         7 |
+        | Fisher value   =          10676.727 |                                          |
+        ==================================================================================
+        | Variables         | Coefficients   | Std. Errors  | t-values   | Probabilities |
+        ==================================================================================
+        | X0                |         1.3015 |      0.03079 |     42.273 |     0.0   *** |
+        | X1                |       -0.48712 |      0.03123 |    -15.597 |     0.0   *** |
+        | X2                |        1.62079 |      0.04223 |     38.377 |     0.0   *** |
+        | X3                |        2.55237 |       0.0326 |     78.284 |     0.0   *** |
+        | X4                |       -7.54776 |      0.03247 |   -232.435 |     0.0   *** |
+        | X1*X2             |        0.03626 |      0.02866 |      1.265 |   0.206       |
+        | exp(X2)           |       -0.00929 |      0.01551 |     -0.599 |   0.549       |
+        ==================================================================================
+        | Significance codes: 0. < *** < 0.001 < ** < 0.01 < * < 0.05 < . < 0.1 < '' < 1 |
         ```
         
         
-        ### 3.2. Logistic regression
+        
+        ### 3.2. [GLM](https://www.florianfelice.com/statinf/econometrics/glm.html?orgn=github)
         
         The logistic regression can be used for binary classification where ![Y](https://latex.codecogs.com/svg.latex?\Large&space;Y) follows a Bernoulli distribution. With ![X](https://latex.codecogs.com/svg.latex?\Large&space;X) being the matrix of regressors, we have:
         
@@ -85,8 +116,8 @@ Description: # STATINF
         We then implement the regression with:
         
         ```python
-        from statinf.regressions.glm import GLM
-        from statinf.data.GenerateData import generate_dataset
+        from statinf.regressions import GLM
+        from statinf.data import generate_dataset
         
         # Generate a synthetic dataset
         data = generate_dataset(coeffs=[1.2556, -6.465, 1.665414, -1.5444], n=2500, std_dev=10.5, binary=True)
@@ -101,26 +132,43 @@ Description: # STATINF
         logit = GLM(formula, train, test_set=test)
         
         # Fit the model
-        logit.fit(plot=True, epochs=1000, verbose=True)
+        logit.fit(plot=False, maxit=10)
         
         logit.get_weights()
         ```
         
-        The ouput:
+        The ouput will be:
         
-        ```python
-        {'weights': array([ 0.00999791, -0.03512158,  0.00404969, -0.01669436]), 'bias': array(-0.12849798)}
+        ```bash
+        ==================================================================================
+        |                                  Logit summary                                 |
+        ==================================================================================
+        | McFadden R²     =          0.67128 | McFadden R² Adj.    =              0.6424 |
+        | Log-Likelihood  =          -227.62 | Null Log-Likelihood =             -692.45 |
+        | LR test p-value =              0.0 | Covariance          =           nonrobust |
+        | n               =              999 | p                   =                  5  |
+        | Iterations      =                8 | Convergence         =                True |
+        ==================================================================================
+        | Variables         | Coefficients   | Std. Errors  | t-values   | Probabilities |
+        ==================================================================================
+        | X0                |       -1.13024 |      0.10888 |    -10.381 |     0.0   *** |
+        | X1                |        0.02963 |      0.07992 |      0.371 |   0.711       |
+        | X2                |       -1.40968 |       0.1261 |    -11.179 |     0.0   *** |
+        | X3                |         0.5253 |      0.08966 |      5.859 |     0.0   *** |
+        ==================================================================================
+        | Significance codes: 0. < *** < 0.001 < ** < 0.01 < * < 0.05 < . < 0.1 < '' < 1 |
+        ==================================================================================
         ```
         
         
-        ### 3.3. Multi Layer Perceptron
+        ### 3.3. [Multi Layer Perceptron](https://www.florianfelice.com/statinf/deeplearning/neuralnetwork.html?orgn=github)
         
         You can train a Neural Network using the `MLP` class.
         The below example shows how to train an MLP with 1 single linear layer. It is equivalent to implement an OLS with Gradient Descent.
         
         ```python
-        from statinf.data.GenerateData import generate_dataset
-        from statinf.ml.neuralnetwork import MLP, Layer
+        from statinf.data import generate_dataset
+        from statinf.ml import MLP, Layer
         
         # Generate the synthetic dataset
         data = generate_dataset(coeffs=[1.2556, -6.465, 1.665414, 1.5444], n=1000, std_dev=1.6)

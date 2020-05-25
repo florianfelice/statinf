@@ -10,9 +10,9 @@ sys.path.append(f"/Users/{getpass.getuser()}/Documents/PYCOF/")
 
 import pycof as pc
 from statinf.regressions import OLS
-from statinf.data.GenerateData import generate_dataset
-from statinf.data.ProcessData import parse_formula
-from statinf.ml.neuralnetwork import MLP, Layer
+from statinf.data import generate_dataset
+from statinf.data import parse_formula
+from statinf.ml import MLP, Layer
 from statinf.ml.losses import mean_squared_error
 
 # General parameters

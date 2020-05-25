@@ -16,7 +16,7 @@ Example
 
 .. code-block:: python
 
-    import statinf.GenerateData as gd
+    import statinf.data as gd
     from statinf.regressions import OLS
 
     # Generate a synthetic dataset

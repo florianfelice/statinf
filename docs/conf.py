@@ -54,6 +54,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
     'sphinx_copybutton',
+    'sphinx.ext.viewcode',
 ]
 
 autoclass_content = 'both'

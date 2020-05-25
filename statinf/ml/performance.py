@@ -14,7 +14,7 @@ class BinaryPerformance:
         """
         warnings.filterwarnings('ignore')
         # Format y_true
-        if type(y_true) == pd.Series:
+        if type(y_true) in [pd.Series, pd.DataFrame]:
             true = list(y_true.values)
         elif type(y_true) == list:
             true = y_true
@@ -28,7 +28,7 @@ class BinaryPerformance:
         else:
             raise TypeError('Type for y_true is not valid.')
         # Format y_pred
-        if type(y_pred) == pd.Series:
+        if type(y_pred) in [pd.Series, pd.DataFrame]:
             pred = list(y_pred.values)
         elif type(y_pred) == list:
             pred = y_pred
