@@ -91,6 +91,7 @@ def parse_formula(formula, data, check_values=True, return_all=False):
     no_space_formula = formula.replace(' ', '')
     Y_col = no_space_formula.split('~')[0]
     X_col = no_space_formula.split('~')[1].split('+')
+    all_cols = data.columns
 
     # Extract transformations
     log_cols = [x for x in X_col if re.findall('log()', x)]  # log
@@ -115,7 +116,7 @@ def parse_formula(formula, data, check_values=True, return_all=False):
     for c in log_cols:
         col_to_transform = c.split('(')[1].split(')')[0]
         # Column exists?
-        assert col_to_transform in X_col, f'Column {col_to_transform} does not exist'
+        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
         if check_values:
             assert data[col_to_transform].min() > 0, f'Column {col_to_transform} contains non-positive values.'
         # Transform
@@ -125,22 +126,22 @@ def parse_formula(formula, data, check_values=True, return_all=False):
         c_left = c.split('**')[0]
         c_power = c.split('**')[1]
         # Get components as number or column from data
-        left = data[c_left].values if c_left in X_col else float(c_left)
-        power = data[c_power].values if c_power in X_col else float(c_power)
+        left = data[c_left].values if c_left in all_cols else float(c_left)
+        power = data[c_power].values if c_power in all_cols else float(c_power)
         # Transform
         data.loc[:, c] = left ** power
     # Exp
     for c in exp_cols:
         col_to_transform = c.split('(')[1].split(')')[0]
         # Column exists?
-        assert col_to_transform in X_col, f'Column {col_to_transform} does not exist'
+        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
         # Transform
         data.loc[:, c] = np.exp(data[col_to_transform])
     # Sqrt
     for c in sqrt_cols:
         col_to_transform = c.split('(')[1].split(')')[0]
         # Column exists?
-        assert col_to_transform in X_col, f'Column {col_to_transform} does not exist'
+        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
         if check_values:
             assert data[col_to_transform].min() >= 0, f'Column {col_to_transform} contains negative values.'
         # Transform
@@ -149,14 +150,14 @@ def parse_formula(formula, data, check_values=True, return_all=False):
     for c in cos_cols:
         col_to_transform = c.split('(')[1].split(')')[0]
         # Column exists?
-        assert col_to_transform in X_col, f'Column {col_to_transform} does not exist'
+        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
         # Transform
         data.loc[:, c] = np.sqrt(data[col_to_transform])
     # Sin
     for c in sin_cols:
         col_to_transform = c.split('(')[1].split(')')[0]
         # Column exists?
-        assert col_to_transform in X_col, f'Column {col_to_transform} does not exist'
+        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
         # Transform
         data.loc[:, c] = np.sin(data[col_to_transform])
     # Multiplications
@@ -165,8 +166,8 @@ def parse_formula(formula, data, check_values=True, return_all=False):
         c_right = c.split('*')[1]
         # Get components as number or column from data
         try:
-            left = data[c_left].values if c_left in X_col else float(c_left)
-            right = data[c_right].values if c_right in X_col else float(c_right)
+            left = data[c_left].values if c_left in all_cols else float(c_left)
+            right = data[c_right].values if c_right in all_cols else float(c_right)
         except Exception:
             raise ValueError(f'Columns {c_left} or {c_right} not found in data.')
         # Transform
@@ -176,8 +177,8 @@ def parse_formula(formula, data, check_values=True, return_all=False):
         c_num = c.split('/')[0]
         c_denom = c.split('/')[1]
         # Get components as number or column from data
-        num = data[c_num].values if c_num in X_col else float(c_num)
-        denom = data[c_denom].values if c_denom in X_col else float(c_denom)
+        num = data[c_num].values if c_num in all_cols else float(c_num)
+        denom = data[c_denom].values if c_denom in all_cols else float(c_denom)
         if check_values:
             assert (denom == 0.).sum() == 0, f'Column {col_to_transform} contains null values.'
         # Transform

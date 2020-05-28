@@ -11,7 +11,7 @@ setuptools.setup(
     description="{desc}",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/florianfelice/{library}",
+    url="https://www.florianfelice.com/{library}",
     packages=setuptools.find_packages(),
     install_requires=[
           {requirements}

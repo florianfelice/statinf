@@ -5,13 +5,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="statinf",
-    version="1.0.24",
+    version="1.0.25",
     author="Florian Felice",
     author_email="florian.felice@outlook.com",
     description="A library for statistics and causal inference",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/florianfelice/statinf",
+    url="https://www.florianfelice.com/statinf",
     packages=setuptools.find_packages(),
     install_requires=[
           "pandas>=0.24.1",

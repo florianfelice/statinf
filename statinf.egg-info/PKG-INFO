@@ -1,8 +1,8 @@
 Metadata-Version: 2.1
 Name: statinf
-Version: 1.0.24
+Version: 1.0.25
 Summary: A library for statistics and causal inference
-Home-page: https://github.com/florianfelice/statinf
+Home-page: https://www.florianfelice.com/statinf
 Author: Florian Felice
 Author-email: florian.felice@outlook.com
 License: UNKNOWN
