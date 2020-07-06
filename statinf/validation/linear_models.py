@@ -43,7 +43,7 @@ appli = data.iloc[2001:n]
 
 print('\n=== TEST OLS ===\n')
 
-formula = "Y ~ X0+ X1 + X2 + X4 +X1*X3+ exp(X3)"
+formula = "Y ~ X0+ X1 + X2 + X4"
 ols = OLS(formula, train, fit_intercept=False)
 
 pred_ols = ols.predict(appli, conf_level=.95)

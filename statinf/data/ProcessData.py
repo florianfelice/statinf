@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import re
 import warnings
+from types import SimpleNamespace
 
 from ..misc import ValueWarning
 
@@ -93,81 +94,49 @@ def parse_formula(formula, data, check_values=True, return_all=False):
     X_col = no_space_formula.split('~')[1].split('+')
     all_cols = data.columns
 
-    # Extract transformations
-    log_cols = [x for x in X_col if re.findall('log()', x)]  # log
-    exp_cols = [x for x in X_col if re.findall('exp()', x)]  # exp
-    sqrt_cols = [x for x in X_col if re.findall('sqrt()', x)]  # sqrt
-    cos_cols = [x for x in X_col if re.findall('cos()', x)]  # cos
-    sin_cols = [x for x in X_col if re.findall('sin()', x)]  # sin
-    pow_cols = [x for x in X_col if re.findall('[a-zA-Z0-9][*][*][a-zA-Z0-9]', x)]  # X1 ** x
-    inter_cols = [x for x in X_col if re.findall('[a-zA-Z0-9][*][a-zA-Z0-9]', x)]  # X1 * X2
-    div_cols = [x for x in X_col if re.findall('[a-zA-Z0-9][/][a-zA-Z0-9]', x)]  # X1 / X2
+    # Non-linear transformations
+    log_cols = [re.search('(?<=log\().*?(?=\))', x).group(0) for x in X_col if re.findall('log\(', x)]  # log
+    exp_cols = [re.search('(?<=exp\().*?(?=\))', x).group(0) for x in X_col if re.findall('exp\(', x)]  # exp
+    sqrt_cols = [re.search('(?<=sqrt\().*?(?=\))', x).group(0) for x in X_col if re.findall('sqrt\(', x)]  # sqrt
+    cos_cols = [re.search('(?<=cos\().*?(?=\))', x).group(0) for x in X_col if re.findall('cos\(', x)]  # cos
+    sin_cols = [re.search('(?<=sin\().*?(?=\))', x).group(0) for x in X_col if re.findall('sin\(', x)]  # sin
 
-    # Check for null values?
-    if check_values:
-        if data.isnull().values.any():
-            warnings.warn('Your dataset contains null values', ValueWarning)
+    # Transformation functions
+    transformations_functional = {'log': {'func': np.log, 'cols': log_cols},
+                                  'exp': {'func': np.exp, 'cols': exp_cols},
+                                  'cos': {'func': np.cos, 'cols': cos_cols},
+                                  'sin': {'func': np.sin, 'cols': sin_cols},
+                                  'sqrt': {'func': np.sqrt, 'cols': sqrt_cols},
+                                  }
+    # Apply transformations
+    for key, transformation in transformations_functional.items():
+        for c in transformation['cols']:
+            col_to_transform = c  # .split('(')[1].split(')')[0]
+            # Transform
+            data.loc[:, f'{key}({col_to_transform})'] = transformation['func'](data[col_to_transform])
 
-    # Temporarily hide pandas' warning message for copy
-    pd.options.mode.chained_assignment = None
+    # Multiplications, power and ration functions
+    pow_cols = [x for x in X_col if re.findall('[a-zA-Z0-9\(\)][*][*][a-zA-Z0-9]', x)]  # X1 ** x
+    inter_cols = [x for x in X_col if re.findall('[a-zA-Z0-9\(\)][*][a-zA-Z0-9]', x)]  # X1 * X2
+    div_cols = [x for x in X_col if re.findall('[a-zA-Z0-9\(\)][/][a-zA-Z0-9]', x)]  # X1 / X2
 
-    # Transform data
-    # Log
-    for c in log_cols:
-        col_to_transform = c.split('(')[1].split(')')[0]
-        # Column exists?
-        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
-        if check_values:
-            assert data[col_to_transform].min() > 0, f'Column {col_to_transform} contains non-positive values.'
-        # Transform
-        data.loc[:, c] = np.log(data[col_to_transform])
     # Exponents
     for c in pow_cols:
         c_left = c.split('**')[0]
         c_power = c.split('**')[1]
         # Get components as number or column from data
-        left = data[c_left].values if c_left in all_cols else float(c_left)
-        power = data[c_power].values if c_power in all_cols else float(c_power)
+        left = data[c_left].values if c_left in data.columns else float(c_left)
+        power = data[c_power].values if c_power in data.columns else float(c_power)
         # Transform
         data.loc[:, c] = left ** power
-    # Exp
-    for c in exp_cols:
-        col_to_transform = c.split('(')[1].split(')')[0]
-        # Column exists?
-        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
-        # Transform
-        data.loc[:, c] = np.exp(data[col_to_transform])
-    # Sqrt
-    for c in sqrt_cols:
-        col_to_transform = c.split('(')[1].split(')')[0]
-        # Column exists?
-        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
-        if check_values:
-            assert data[col_to_transform].min() >= 0, f'Column {col_to_transform} contains negative values.'
-        # Transform
-        data.loc[:, c] = np.sqrt(data[col_to_transform])
-    # Cos
-    for c in cos_cols:
-        col_to_transform = c.split('(')[1].split(')')[0]
-        # Column exists?
-        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
-        # Transform
-        data.loc[:, c] = np.sqrt(data[col_to_transform])
-    # Sin
-    for c in sin_cols:
-        col_to_transform = c.split('(')[1].split(')')[0]
-        # Column exists?
-        assert col_to_transform in all_cols, f'Column {col_to_transform} does not exist'
-        # Transform
-        data.loc[:, c] = np.sin(data[col_to_transform])
     # Multiplications
     for c in inter_cols:
         c_left = c.split('*')[0]
         c_right = c.split('*')[1]
         # Get components as number or column from data
         try:
-            left = data[c_left].values if c_left in all_cols else float(c_left)
-            right = data[c_right].values if c_right in all_cols else float(c_right)
+            left = data[c_left].values if c_left in list(data.columns) + X_col else float(c_left)
+            right = data[c_right].values if c_right in list(data.columns) + X_col else float(c_right)
         except Exception:
             raise ValueError(f'Columns {c_left} or {c_right} not found in data.')
         # Transform
@@ -177,8 +146,8 @@ def parse_formula(formula, data, check_values=True, return_all=False):
         c_num = c.split('/')[0]
         c_denom = c.split('/')[1]
         # Get components as number or column from data
-        num = data[c_num].values if c_num in all_cols else float(c_num)
-        denom = data[c_denom].values if c_denom in all_cols else float(c_denom)
+        num = data[c_num].values if c_num in list(data.columns) + X_col else float(c_num)
+        denom = data[c_denom].values if c_denom in list(data.columns) + X_col else float(c_denom)
         if check_values:
             assert (denom == 0.).sum() == 0, f'Column {col_to_transform} contains null values.'
         # Transform
@@ -198,11 +167,11 @@ def parse_formula(formula, data, check_values=True, return_all=False):
 #######################################################################################################################
 
 # Adding One Hot Encoding
-def OneHotEncoding(dataset, columns, drop=True, verbose=False):
+def OneHotEncoding(data, columns, drop=True, verbose=False):
     """Performs One Hot Encoding (OHE) usally used in Machine Learning.
 
-    :param dataset: Data Frame on which we apply One Hot Encoding.
-    :type dataset: :obj:`pandas.DataFrame`
+    :param data: Data Frame on which we apply One Hot Encoding.
+    :type data: :obj:`pandas.DataFrame`
     :param columns: Column to be converted to dummy variables.
     :type columns: :obj:`list`
     :param drop: Drop the column that needs to be converted to dummies, defaults to True.
@@ -236,36 +205,51 @@ def OneHotEncoding(dataset, columns, drop=True, verbose=False):
         ... |  5 |             1 |          1 |          0 |  26 |
         ... +----+---------------+------------+------------+-----+
 
-    :return: Transformed dataset with One Hot Encoded variables.
+    :return: Transformed data with One Hot Encoded variables.
     :rtype: :obj:`pandas.DataFrame`
     """
 
+    dataset = data.copy()
+
+    try:
+        if dataset.meta._ohe_exists:
+            dataset.meta._ohe_exists = True
+    except Exception:
+        dataset.meta = SimpleNamespace()
+        dataset.meta._ohe_exists = True
+        dataset.meta._ohe = {}
+
     cols = [columns] if type(columns) == str else columns
 
+    # Start encoding column by column
     for column in cols:
         # Get all values from the column
         all_values = dataset[column].unique()
+        # Add column metadata
+        dataset.meta._ohe.update({column: [f'{column}_{val}' for val in all_values]})
 
         # Encode values
         for val in all_values:
             if verbose:
                 print('Encoding for value: ' + str(val))
-            dataset.loc[:, column + '_' + str(val)] = 0
-            dataset.loc[dataset[column] == val, column + '_' + str(val)] = 1
+            colname = column + '_' + str(val)
+            dataset.loc[:, colname] = 0
+            dataset.loc[dataset[column] == val, colname] = 1
 
         if drop:
             dataset.drop(columns=[column], inplace=True)
+    
     return(dataset)
 
 
 #######################################################################################################################
 
 # convert an array of values into a dataset matrix: used for LSTM data pre-processing
-def create_dataset(dataset, look_back=1):
+def create_dataset(data, look_back=1):
     """Function to convert a DataFrame to array format readable for keras LSTM.
 
-    :param dataset: DataFrame on which to aply the transformation.
-    :type dataset: :obj:`pandas.DataFrame`
+    :param data: DataFrame on which to aply the transformation.
+    :type data: :obj:`pandas.DataFrame`
     :param look_back: Number of periods in the past to consider (defaults 1)., defaults to 1
     :type look_back: :obj:`int`, optional
 
@@ -278,6 +262,8 @@ def create_dataset(dataset, look_back=1):
     :rtype: * :obj:`numpy.array`
         * :obj:`numpy.array`
     """
+
+    dataset = data.copy()
 
     dataX, dataY = [], []
     for i in range(len(dataset) - look_back - 1):

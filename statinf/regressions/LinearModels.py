@@ -3,7 +3,7 @@ from scipy import stats as scp
 import pandas as pd
 
 from ..data.ProcessData import parse_formula
-from ..misc import summary
+from ..misc import summary, get_significance
 
 # TODO: Add Log-Likehood + AIC + BIC
 # TODO: Add dask for GPU usage
@@ -212,6 +212,7 @@ class OLS:
         summary_df["Standard Errors"] = self.std_err_beta
         summary_df["t-values"] = t_values
         summary_df["Probabilities"] = p_values
+        summary_df["Significance"] = summary_df["Probabilities"].map(lambda x: get_significance(x))
 
         _r2 = round(self.r_squared(), 5)
         ar2 = round(self.adjusted_r_squared(), 5)
@@ -223,13 +224,18 @@ class OLS:
         if return_df:
             return(summary_df)
         else:
-            summ = f"==================================================================================\n"
-            summ += f'|                                  OLS summary                                   |\n'
-            summ += f"==================================================================================\n"
-            summ += f"| R²             =         {_r2:10} | R² Adj.      =                {ar2:10} |\n"
-            summ += f"| n              =         {_n_:10} | p            =                {_p_:10} |\n"
-            summ += f"| Fisher value   =    {fis:15} |                                          |\n"
-            summ += f"==================================================================================\n"
+            max_var = np.max([len(v) for v in summary_df.Variables])
+
+            add_sp = ' ' * np.max([max_var - 17, 0])
+            add_sep = '=' * np.max([max_var - 17, 0])
+            space = np.max([max_var, 17])
+
+            summ = f"=================================================================================={add_sep}\n"
+            summ += f'|                                  OLS summary                                   {add_sp}|\n'
+            summ += f"=================================================================================={add_sep}\n"
+            summ += f"| R²             =         {_r2:10} | R² Adj.      =                {ar2:10} {add_sp}|\n"
+            summ += f"| n              =         {_n_:10} | p            =                {_p_:10} {add_sp}|\n"
+            summ += f"| Fisher value   =    {fis:15} |                                          {add_sp}|\n"
             summ += summary(summary_df)
             return(summ)
 

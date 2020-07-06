@@ -51,7 +51,7 @@ Indices and tables
 Modules available
 =================
 
-Ecomometrics
+Econometrics
 ------------
 
 .. toctree::

@@ -9,7 +9,7 @@ from ..ml.initializations import init_params
 from ..ml.activations import logit
 
 from ..data.ProcessData import parse_formula
-from ..misc import ConvergenceWarning, summary
+from ..misc import ConvergenceWarning, summary, get_significance
 # from .glm_test import GLM
 
 # TODO: HC covariance
@@ -242,6 +242,32 @@ class GLM:
             plt.legend()
             plt.show()
 
+    def r_squared(self):
+        """Mc Fadden's pseudo-:math:`R^{2}` -- Goodness of fit
+
+        :formula: .. math:: R^{2} = 1 - \\dfrac{LL(\\hat{\\beta})}{LL(\\bar{Y})}
+
+        :return: Goodness of fit.
+        :rtype: :obj:`float`
+        """
+        null_mod = self.__class__(formula=f'{self.Y_col} ~ 1', data=self.df)
+        _r2 = 1 - self._log_likelihood() / null_mod._log_likelihood()
+        self.r_squared = _r2
+        return _r2
+
+    def adjusted_r_squared(self):
+        """Mc Fadden's pseudo-:math:`R^{2}` adjusted -- Adjusted goodness of fit
+
+        :formula: .. math:: R^{2}_{adj} = 1 - \\dfrac{LL(\\hat{\\beta}) - p}{LL(\\bar{Y})}
+
+        :return: Adjusted goodness of fit.
+        :rtype: :obj:`float`
+        """
+        null_mod = self.__class__(formula=f'{self.Y_col} ~ 1', data=self.df)
+        ar2 = 1 - (self._log_likelihood() - self.p) / null_mod._log_likelihood()
+        self.adjusted_r_squared = ar2
+        return ar2
+
     def summary(self, return_df=False):
         """Statistical summary for GLM model
 
@@ -280,6 +306,7 @@ class GLM:
         summary_df["Standard Errors"] = self._std_errors()
         summary_df["t-values"] = t_values
         summary_df["Probabilities"] = p_values
+        summary_df["Significance"] = summary_df["Probabilities"].map(lambda x: get_significance(x))
 
         # Null model for null log likelihood
         null_mod = self.__class__(formula=f'{self.Y_col} ~ 1', data=self.df)
@@ -302,15 +329,20 @@ class GLM:
         if return_df:
             return(summary_df)
         else:
-            summ = f"==================================================================================\n"
-            summ += f"|                                  Logit summary                                 |\n"
-            summ += f"==================================================================================\n"
-            summ += f"| McFadden's R²   =       {_r2:10} | McFadden's R² Adj.  =          {ar2:10} |\n"
-            summ += f"| Log-Likelihood  =       {_ll:10} | Null Log-Likelihood =          {nll:10} |\n"
-            summ += f"| LR test p-value =       {lrp:10} | Covariance          =          {_ct:10} |\n"
-            summ += f"| n               =       {_n_:10} | p                   =          {_p_:10} |\n"
-            summ += f"| Iterations      =       {_it:10} | Convergence         =           {_cv:5} |\n"
-            summ += f"==================================================================================\n"
+            max_var = np.max([len(v) for v in summary_df.Variables])
+
+            add_sp = ' ' * np.max([max_var - 17, 0])
+            add_sep = '=' * np.max([max_var - 17, 0])
+            space = np.max([max_var, 17])
+
+            summ = f"=================================================================================={add_sep}\n"
+            summ += f"|                                  Logit summary                                 {add_sp}|\n"
+            summ += f"=================================================================================={add_sep}\n"
+            summ += f"| McFadden's R²   =       {_r2:10} | McFadden's R² Adj.  =          {ar2:10} {add_sp}|\n"
+            summ += f"| Log-Likelihood  =       {_ll:10} | Null Log-Likelihood =          {nll:10} {add_sp}|\n"
+            summ += f"| LR test p-value =       {lrp:10} | Covariance          =          {_ct:10} {add_sp}|\n"
+            summ += f"| n               =       {_n_:10} | p                   =          {_p_:10} {add_sp}|\n"
+            summ += f"| Iterations      =       {_it:10} | Convergence         =           {_cv:5} {add_sp}|\n"
             summ += summary(summary_df)
             return(summ)
 
