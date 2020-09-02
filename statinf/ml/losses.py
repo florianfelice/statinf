@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import pandas as pd
 import theano.tensor as T
@@ -58,11 +59,12 @@ def mean_squared_error(y_true, y_pred, root=False):
     :return: Mean Squared Error or its root.
     :rtype: float
     """
-    loss = ((y_pred - y_true).sum())**2
+
+    loss = (y_pred - y_true)**2
     if root:
-        return loss ** (1/2)
+        return math.sqrt(loss.mean())
     else:
-        return loss
+        return loss.mean()
 
 
 def binary_accuracy(y_true, y_pred):
@@ -91,7 +93,8 @@ def mape(y_true, y_pred):
     :type y_true: numpy.array
     :param y_pred: Predicted values.
     :type y_pred: numpy.array
-    :formula: :math:`\\dfrac{100}{n} \\sum_{i=1}^{n} \\dfrac{|y - \\hat{y}|}{y}`
+
+    :formula: :math:`MAPE(y, \\hat{y}) = \\dfrac{100}{n} \\sum_{i=1}^{n} \\dfrac{|y - \\hat{y}|}{y}`
 
     :return: Mean Absolute Percentage Error as percentage.
     :rtype: float
@@ -99,5 +102,5 @@ def mape(y_true, y_pred):
     y = np.array(y_true)
     yhat = np.array(y_pred)
     m = len(y)
-    mape = (100/m) * sum(np.abs(y-yhat))/sum(y)
+    mape = (100 / m) * sum(np.abs(y - yhat)) / sum(y)
     return mape

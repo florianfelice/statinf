@@ -1,16 +1,16 @@
 import warnings
 import pandas as pd
 import numpy as np
-
+import math
 
 class BinaryPerformance:
     def __init__(self, y_true, y_pred):
         """Gives detailed perfomance metrics for binary calssification models.
 
         :param y_true: Array of true targets.
-        :type y_true: :obj:`numpy.array`
+        :type y_true: :obj:`numpy.ndarray`
         :param y_pred: Array of predicted targets.
-        :type y_pred: :obj:`numpy.array`
+        :type y_pred: :obj:`numpy.ndarray`
         """
         warnings.filterwarnings('ignore')
         # Format y_true
@@ -123,3 +123,50 @@ class BinaryPerformance:
         :rtype: :obj:`float`
         """
         return(2 * (self.precision() * self.recall()) / (self.precision() + self.recall()))
+
+
+def mean_squared_error(y_true, y_pred, root=False):
+    """Mean Squared Error
+
+    :param y_true: Real values on which to compare.
+    :type y_true: :obj:`numpy.ndarray`
+    :param y_pred: Predicted values.
+    :type y_pred: :obj:`numpy.ndarray`
+    :param root: Return Root Mean Squared Error (RMSE), defaults to False.
+    :type root: bool, optional
+
+    :formula: :math:`loss = \\dfrac{1}{m} \\times \\sum_{i=1}^{m} (y_i - \\hat{y}_i)^2`
+
+    :references: * Friedman, J., Hastie, T. and Tibshirani, R., 2001. `The elements of statistical learning <https://web.stanford.edu/~hastie/Papers/ESLII.pdf>`_. Ch. 2, pp. 24.
+
+    :return: Mean Squared Error or its root.
+    :rtype: float
+    """
+
+    warnings.filterwarnings('ignore')
+
+    # Format y_true
+    if type(y_true) in [pd.Series, pd.DataFrame, list]:
+        true = np.array(y_true.values)
+    elif type(y_true) == np.ndarray:
+        true = y_true
+    else:
+        raise TypeError('Type for y_true is not valid.')
+
+    # Format y_pred
+    if type(y_pred) in [pd.Series, pd.DataFrame, list]:
+        pred = np.array(y_pred.values)
+    elif type(y_pred) == np.ndarray:
+        pred = y_pred
+    else:
+        raise TypeError('Type for y_pred is not valid.')
+
+    warnings.filterwarnings('default')
+
+    # Compute the square of the difference
+    loss = (pred - true)**2
+
+    if root:
+        return math.sqrt(loss.mean())
+    else:
+        return loss.mean()

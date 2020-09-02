@@ -271,3 +271,167 @@ def create_dataset(data, look_back=1):
         dataX.append(a)
         dataY.append(dataset[i + look_back, 0])
     return np.array(dataX), np.array(dataY)
+
+# Scale dataset
+class Scaler:
+    def __init__(self, data, columns):
+        """Data scaler.
+
+        :param data: Data set to scale.
+        :type data: :obj:`pandas.DataFrame`
+        :param columns: Columns to scale.
+        :type columns: :obj:`list`
+        """
+        super(Scaler, self).__init__()
+        self.data = data.copy()
+        self.scalers = {}
+        self.columns = list(columns)
+
+        for c in columns:
+            _min = self.data[c].min()
+            _max = self.data[c].max()
+            _mean = self.data[c].mean()
+            _std = self.data[c].std()
+            _scale_temp = {'min': float(_min),
+                          'max': float(_max),
+                          'mean': float(_mean),
+                          'std': float(_std),
+                          }
+            self.scalers.update({c: _scale_temp})
+
+    def _col_to_list(self, columns):
+        """Transforms column names to be scaled as list.
+
+        :param columns: Column names to be scaled.
+        :type columns: :obj:`list` or :obj:`str`
+
+        :return: Column name(s) as a list
+        :rtype: :obj:`list`
+        """
+        if columns is None:
+            cols = self.columns
+        elif type(columns) == str:
+            cols = [columns]
+        else:
+            cols = columns
+        return cols
+
+    def MinMax(self, data=None, columns=None, col_suffix=''):
+        """Min-max scaler. Data we range between 0 and 1.
+
+        :param data: Data set to scale, defaults to None, takes data provided in :py:meth:`__init__`.
+        :type data: :obj:`pandas.DataFrame`, optional
+        :param columns: Columns to be scaled, defaults to None, takes the list provided in :py:meth:`__init__`.
+        :type columns: :obj:`list`, optional
+        :param col_suffix: Suffix to add to colum names, defaults to '', overrides the existing columns.
+        :type col_suffix: :obj:`str`, optional
+
+        :formula: .. math:: x_{\\text{scaled}} = \\dfrac{x - \\min(x)}{\\max(x) - \\min(x)}
+
+        :return: Data set with scaled features.
+        :rtype: :obj:`pandas.DataFrame`
+        """
+        self._minmax_suffix = col_suffix
+        cols = self._col_to_list(columns)
+        df = self.data if data is None else data.copy()
+
+        for c in cols:
+            # Retreive min and max
+            _min = self.scalers[c]['min']
+            _max = self.scalers[c]['max']
+            df[c + col_suffix] = (df[c] - _min) / (_max - _min)
+        return df
+
+    def unscaleMinMax(self, data=None, columns=None):
+        """Unscale from min-max.
+        Retreives data from the same range as the original features.
+
+        :param data: Data set to unscale, defaults to None, takes data provided in :py:meth:`__init__`.
+        :type data: :obj:`pandas.DataFrame`, optional
+        :param columns: Columns to be unscaled, defaults to None, takes the list provided in :py:meth:`__init__`.
+        :type columns: :obj:`list`, optional
+
+        :formula: .. math:: x_{\\text{unscaled}} = x_{\\text{scaled}} \\cdot \\left(\\max(x) - \\min(x) \\right) + \\min(x)
+
+        :return: Unscaled data set.
+        :rtype: :obj:`pandas.DataFrame`
+        """
+        cols = self._col_to_list(columns)
+        df = self.data if data is None else data.copy()
+        unscale_suffix = '_unscaled' if self._minmax_suffix != '' else ''
+
+        for c in cols:
+            # Retreive min and max
+            _min = self.scalers[c]['min']
+            _max = self.scalers[c]['max']
+            df[c + unscale_suffix] = (df[c + self._minmax_suffix] * (_max - _min)) + _min
+        return df
+
+    def Normalize(self, center=True, reduce=True, data=None, columns=None, col_suffix=''):
+        """Data normalizer.
+        Centers and reduces features (from mean and standard deviation).
+
+        :param center: Center the variable, i.e. substract the mean, defaults to True.
+        :type center: :obj:`bool`, optional
+        :param reduce: Reduce the variable, i.e. devide by standard deviation, defaults to True.
+        :type reduce: :obj:`bool`, optional
+        :param data: Data set to normalize, defaults to None, takes data provided in :py:meth:`__init__`.
+        :type data: :obj:`pandas.DataFrame`, optional
+        :param columns: Columns to be normalize, defaults to None, takes the list provided in :py:meth:`__init__`.
+        :type columns: :obj:`list`, optional
+        :param col_suffix: [description], defaults to ''
+        :type col_suffix: :obj:`str`, optional
+
+        :formula: .. math:: x_{\\text{scaled}} = \\dfrac{x - \\bar{x}}{\\sqrt{\\mathbb{V}(x)}}
+
+        :return: Data set with normalized features.
+        :rtype: :obj:`pandas.DataFrame`
+        """
+        self._standard_suffix = col_suffix
+        cols = self._col_to_list(columns)
+        df = self.data if data is None else data.copy()
+
+        for c in cols:
+            # Retreive mean
+            if center:
+                _mean = self.scalers[c]['mean']
+                self.scalers[c].update({'center': True})
+            else:
+                _mean = 0.
+                self.scalers[c].update({'center': False})
+            # Retreive std
+            if reduce:
+                _std = self.scalers[c]['std']
+                self.scalers[c].update({'reduce': True})
+            else:
+                _std = 1.
+                self.scalers[c].update({'reduce': False})
+
+            df[c + col_suffix] = (df[c] - _mean) / _std
+        return df
+
+    def unscaleNormalize(self, data=None, columns=None):
+        """Denormalize data to retreive the same range as the original data set.
+
+        :param data: Data set to unscale, defaults to None, takes data provided in :py:meth:`__init__`.
+        :type data: :obj:`pandas.DataFrame`, optional
+        :param columns: Columns to be unscaled, defaults to None, takes the list provided in :py:meth:`__init__`.
+        :type columns: :obj:`list`, optional
+
+        :formula: .. math:: x_{\\text{unscaled}} = x_{\\text{scaled}} \\cdot \\sqrt{\\mathbb{V}(x)} + \\bar{x}
+
+        :return: De-normalized data set.
+        :rtype: :obj:`pandas.DataFrame`
+        """
+        cols = self._col_to_list(columns)
+        df = self.data if data is None else data.copy()
+        unscale_suffix = '_unscaled' if self._standard_suffix != '' else ''
+
+        for c in cols:
+            # Retreive min and max
+            _mean = self.scalers[c]['mean'] if self.scalers[c]['center'] else 0.
+            _std = self.scalers[c]['std'] if self.scalers[c]['reduce'] else 1.
+
+            df[c + unscale_suffix] = (df[c + self._standard_suffix] * _std) + _mean
+
+        return df
