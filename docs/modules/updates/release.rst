@@ -11,6 +11,58 @@ Library versions in between are used to fix bugs and implement improvement sugge
 ----
 
 
+***********************************************************************************
+1.0.27 - September 13, 2020 - New module :py:meth:`statinf.data.ProcessData.Scaler`
+***********************************************************************************
+
+A new functionality is now available for Machine Learning models to scale data.
+The class :py:meth:`statinf.data.ProcessData.Scaler` includes the below methods:
+
+* :obj:`MinMax` Scales the data to range between 0 and 1.
+
+.. math:: x_{\text{scaled}} = \dfrac{x - \min(x)}{\max(x) - \min(x)}
+
+
+* :obj:`Normalize` Scales the data to have mean 0 and standard deviation 1 (user can chose to center or reduce or not).
+
+.. math:: x_{\text{scaled}} = \dfrac{x - \bar{x}}{\sqrt{\mathbb{V}(x)}}
+
+
+^^^^^^^^^^^^^^
+How to use it?
+^^^^^^^^^^^^^^
+
+
+
+.. code::
+
+    from statinf.data import Scaler
+    
+    # Load the Scaler class
+    scaler = Scaler(data=df, columns=['X1', 'X2'])
+    # Scale our dataset with MinMax method
+    scaled_df = scaler.MinMax()
+    print(scaled_df)
+    # Unscale data
+    unscaled_df = scaler.unscaleMinMax(scaled_df)
+    print(unscaled_df)
+
+
+^^^^^^^^^^^^^^^^^^
+How to install it?
+^^^^^^^^^^^^^^^^^^
+
+.. code::
+
+    pip3 install statinf==1.0.27
+
+
+See more details: :py:meth:`statinf.data.Scaler`
+
+
+----
+
+
 *************************************************************************************
 1.0.23 - May 17, 2020 - New model :func:`~GLM` and improved features for :func:`~OLS`
 *************************************************************************************
@@ -53,10 +105,6 @@ The module is now fully working.
 ^^^^^^^^^^^^^^
 How to use it?
 ^^^^^^^^^^^^^^
-
-.. code::
-
-    from statinf.regressions import GLM
 
 
 .. code::

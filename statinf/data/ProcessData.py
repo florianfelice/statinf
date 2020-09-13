@@ -303,7 +303,7 @@ class Scaler:
             ... +-----------+-----------+-----------+-----------+-----------+-----------+
             >>> # Load scaler class
             >>> scaler = Scaler(data=data, columns=['X1', 'X2'])
-            >>> # Scaler our dataset with MinMax method
+            >>> # Scale our dataset with MinMax method
             >>> scaled_df = scaler.MinMax()
             >>> print(scaled_df)
             ... +-----------+-----------+-----------+-----------+-----------+-----------+
