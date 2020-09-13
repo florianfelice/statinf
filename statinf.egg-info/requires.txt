@@ -1,6 +1,6 @@
-pandas>=0.24.1
+matplotlib>=3.1.1
 numpy>=1.16.3
+pandas>=0.24.1
+pycof>=1.0.19
 scipy>=1.2.1
 theano>=1.0.4
-pycof>=1.0.19
-matplotlib>=3.1.1

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import math
 
+
 class BinaryPerformance:
     def __init__(self, y_true, y_pred):
         """Gives detailed perfomance metrics for binary calssification models.
@@ -133,7 +134,7 @@ def mean_squared_error(y_true, y_pred, root=False):
     :param y_pred: Predicted values.
     :type y_pred: :obj:`numpy.ndarray`
     :param root: Return Root Mean Squared Error (RMSE), defaults to False.
-    :type root: bool, optional
+    :type root: :obj:`bool`, optional
 
     :formula: :math:`loss = \\dfrac{1}{m} \\times \\sum_{i=1}^{m} (y_i - \\hat{y}_i)^2`
 
@@ -146,16 +147,20 @@ def mean_squared_error(y_true, y_pred, root=False):
     warnings.filterwarnings('ignore')
 
     # Format y_true
-    if type(y_true) in [pd.Series, pd.DataFrame, list]:
+    if type(y_true) in [pd.Series, pd.DataFrame]:
         true = np.array(y_true.values)
+    elif type(y_true) in [list]:
+        true = np.array(y_true)
     elif type(y_true) == np.ndarray:
         true = y_true
     else:
         raise TypeError('Type for y_true is not valid.')
 
     # Format y_pred
-    if type(y_pred) in [pd.Series, pd.DataFrame, list]:
+    if type(y_pred) in [pd.Series, pd.DataFrame]:
         pred = np.array(y_pred.values)
+    elif type(y_pred) in [list]:
+        pred = np.array(y_pred)
     elif type(y_pred) == np.ndarray:
         pred = y_pred
     else:
@@ -170,3 +175,66 @@ def mean_squared_error(y_true, y_pred, root=False):
         return math.sqrt(loss.mean())
     else:
         return loss.mean()
+
+
+# MAPE formula
+def mape(y_true, y_pred, weights=False):
+    """Computes the Mean Absolute Percentage Error (MAPE) or Weighted Mean Absolute Percentage Error (WMAPE).
+
+    :param y_true: Real values on which to compare.
+    :type y_true: :obj:`numpy.array`
+    :param y_pred: Predicted values.
+    :type y_pred: :obj:`numpy.array`
+    :param weights: Compute WMAPE.
+    :type weights: :obj:`bool`
+
+    :formula:
+
+    * :math:`MAPE(y, \\hat{y}) = \\dfrac{100}{n} \\sum_{i=1}^{n} \\dfrac{|y - \\hat{y}|}{y}`
+    * :math:`WMAPE(y, \\hat{y}) = 100 \\dfrac{\\sum_{i=1}^{n} {\\dfrac{|y - \\hat{y}|}{y}} \\times y}{\\sum_{i=1}^{n} y}`
+
+    :return: Mean Absolute Percentage Error as percentage.
+    :rtype: float
+    """
+
+    warnings.filterwarnings('ignore')
+    # Format y_true
+    if type(y_true) in [pd.Series, pd.DataFrame]:
+        _true = list(y_true.values)
+    elif type(y_true) == list:
+        _true = y_true
+    elif type(y_true) == np.ndarray:
+        if y_true.shape == (len(y_true), 1):
+            _true = [x[0] for x in np.asarray(y_true)]
+        elif y_true.shape == (len(y_true),):
+            _true = list(y_true)
+        else:
+            raise TypeError('Cannot properly read shape for y_true.')
+    else:
+        raise TypeError('Type for y_true is not valid.')
+    # Format y_pred
+    if type(y_pred) in [pd.Series, pd.DataFrame]:
+        _pred = list(y_pred.values)
+    elif type(y_pred) == list:
+        _pred = y_pred
+    elif type(y_pred) == np.ndarray:
+        if y_pred.shape == (len(y_pred), 1):
+            _pred = [x[0] for x in np.asarray(y_pred)]
+        elif y_pred.shape == (len(y_pred),):
+            _pred = list(y_pred)
+        else:
+            raise TypeError('Cannot properly read shape for y_pred.')
+    else:
+        raise TypeError('Type for y_pred is not valid.')
+
+    preds = pd.DataFrame({'true': _true, 'pred': _pred})
+    preds['abs_err'] = np.abs(preds['true'] - preds['pred'])
+    preds['err_contrib'] = preds['abs_err']/preds['true']
+
+    if weights:
+        preds['err_contrib'] = preds['err_contrib'] * preds['true'] * 100
+        out = preds['err_contrib'].sum() / preds.true.sum()
+    else:
+        out = 100 * preds['err_contrib'].sum() / preds['true'].sum()
+
+    return out

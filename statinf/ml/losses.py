@@ -83,24 +83,3 @@ def binary_accuracy(y_true, y_pred):
 
     perf = pd.DataFrame({'true': true, 'pred': pred})
     return (perf.true == perf.pred).mean()
-
-
-# MAPE formula
-def mape(y_true, y_pred):
-    """Computes the Mean Absolute Percentage Error
-
-    :param y_true: Real values on which to compare.
-    :type y_true: numpy.array
-    :param y_pred: Predicted values.
-    :type y_pred: numpy.array
-
-    :formula: :math:`MAPE(y, \\hat{y}) = \\dfrac{100}{n} \\sum_{i=1}^{n} \\dfrac{|y - \\hat{y}|}{y}`
-
-    :return: Mean Absolute Percentage Error as percentage.
-    :rtype: float
-    """
-    y = np.array(y_true)
-    yhat = np.array(y_pred)
-    m = len(y)
-    mape = (100 / m) * sum(np.abs(y - yhat)) / sum(y)
-    return mape

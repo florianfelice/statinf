@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
 import re
-import warnings
 from types import SimpleNamespace
 
-from ..misc import ValueWarning
 
 # Ranking data
 
@@ -92,14 +90,13 @@ def parse_formula(formula, data, check_values=True, return_all=False):
     no_space_formula = formula.replace(' ', '')
     Y_col = no_space_formula.split('~')[0]
     X_col = no_space_formula.split('~')[1].split('+')
-    all_cols = data.columns
 
     # Non-linear transformations
-    log_cols = [re.search('(?<=log\().*?(?=\))', x).group(0) for x in X_col if re.findall('log\(', x)]  # log
-    exp_cols = [re.search('(?<=exp\().*?(?=\))', x).group(0) for x in X_col if re.findall('exp\(', x)]  # exp
-    sqrt_cols = [re.search('(?<=sqrt\().*?(?=\))', x).group(0) for x in X_col if re.findall('sqrt\(', x)]  # sqrt
-    cos_cols = [re.search('(?<=cos\().*?(?=\))', x).group(0) for x in X_col if re.findall('cos\(', x)]  # cos
-    sin_cols = [re.search('(?<=sin\().*?(?=\))', x).group(0) for x in X_col if re.findall('sin\(', x)]  # sin
+    log_cols = [re.search('(?<=log\\().*?(?=\\))', x).group(0) for x in X_col if re.findall('log\\(', x)]  # log
+    exp_cols = [re.search('(?<=exp\\().*?(?=\\))', x).group(0) for x in X_col if re.findall('exp\\(', x)]  # exp
+    sqrt_cols = [re.search('(?<=sqrt\\().*?(?=\\))', x).group(0) for x in X_col if re.findall('sqrt\\(', x)]  # sqrt
+    cos_cols = [re.search('(?<=cos\\().*?(?=\\))', x).group(0) for x in X_col if re.findall('cos\\(', x)]  # cos
+    sin_cols = [re.search('(?<=sin\\().*?(?=\\))', x).group(0) for x in X_col if re.findall('sin\\(', x)]  # sin
 
     # Transformation functions
     transformations_functional = {'log': {'func': np.log, 'cols': log_cols},
@@ -116,9 +113,9 @@ def parse_formula(formula, data, check_values=True, return_all=False):
             data.loc[:, f'{key}({col_to_transform})'] = transformation['func'](data[col_to_transform])
 
     # Multiplications, power and ration functions
-    pow_cols = [x for x in X_col if re.findall('[a-zA-Z0-9\(\)][*][*][a-zA-Z0-9]', x)]  # X1 ** x
-    inter_cols = [x for x in X_col if re.findall('[a-zA-Z0-9\(\)][*][a-zA-Z0-9]', x)]  # X1 * X2
-    div_cols = [x for x in X_col if re.findall('[a-zA-Z0-9\(\)][/][a-zA-Z0-9]', x)]  # X1 / X2
+    pow_cols = [x for x in X_col if re.findall('[a-zA-Z0-9\\(\\)][*][*][a-zA-Z0-9]', x)]  # X1 ** x
+    inter_cols = [x for x in X_col if re.findall('[a-zA-Z0-9\\(\\)][*][a-zA-Z0-9]', x)]  # X1 * X2
+    div_cols = [x for x in X_col if re.findall('[a-zA-Z0-9\\(\\)][/][a-zA-Z0-9]', x)]  # X1 / X2
 
     # Exponents
     for c in pow_cols:
@@ -272,6 +269,7 @@ def create_dataset(data, look_back=1):
         dataY.append(dataset[i + look_back, 0])
     return np.array(dataX), np.array(dataY)
 
+
 # Scale dataset
 class Scaler:
     def __init__(self, data, columns):
@@ -281,6 +279,64 @@ class Scaler:
         :type data: :obj:`pandas.DataFrame`
         :param columns: Columns to scale.
         :type columns: :obj:`list`
+
+        :example:
+
+            >>> from statinf.data import Scaler, generate_dataset
+            >>> coeffs = [1.2556, -0.465, 1.665414, 2.5444, -7.56445]
+            >>> data = generate_dataset(coeffs, n=10, std_dev=2.6)
+            >>> # Original dataset
+            >>> print(data)
+            ... +-----------+-----------+-----------+-----------+-----------+-----------+
+            ... |        X0 |        X1 |        X2 |        X3 |        X4 |         Y |
+            ... +-----------+-----------+-----------+-----------+-----------+-----------+
+            ... |  0.977594 |  1.669510 | -1.385569 |  0.696975 | -1.207098 |  8.501692 |
+            ... | -0.953802 |  1.025392 | -0.639291 |  0.658251 |  0.746814 | -7.186085 |
+            ... | -0.148140 | -0.972473 |  0.843746 |  1.306845 |  0.269834 |  1.939924 |
+            ... |  0.499385 | -1.081926 |  2.646441 |  0.910503 |  0.857189 |  0.389257 |
+            ... | -0.563977 | -0.511933 | -0.726744 | -0.630345 | -0.486822 | -0.125787 |
+            ... | -0.434994 | -0.396210 |  1.101739 | -0.660236 | -1.197566 |  7.735832 |
+            ... |  0.032478 | -0.114952 | -0.097337 |  1.794769 |  1.239423 | -5.510332 |
+            ... |  0.085569 | -0.600019 |  0.224186 |  0.301771 |  1.278387 | -8.648084 |
+            ... | -0.028844 | -0.329940 | -0.301762 |  0.946077 | -0.359133 |  5.099971 |
+            ... | -0.665312 |  0.270254 | -1.263288 |  0.545625 |  0.499162 | -6.126528 |
+            ... +-----------+-----------+-----------+-----------+-----------+-----------+
+            >>> # Load scaler class
+            >>> scaler = Scaler(data=data, columns=['X1', 'X2'])
+            >>> # Scaler our dataset with MinMax method
+            >>> scaled_df = scaler.MinMax()
+            >>> print(scaled_df)
+            ... +-----------+-----------+-----------+-----------+-----------+-----------+
+            ... |        X0 |        X1 |        X2 |        X3 |        X4 |         Y |
+            ... +-----------+-----------+-----------+-----------+-----------+-----------+
+            ... |  0.977594 |  1.000000 |  0.000000 |  0.696975 | -1.207098 |  8.501692 |
+            ... | -0.953802 |  0.765898 |  0.185088 |  0.658251 |  0.746814 | -7.186085 |
+            ... | -0.148140 |  0.039781 |  0.552904 |  1.306845 |  0.269834 |  1.939924 |
+            ... |  0.499385 |  0.000000 |  1.000000 |  0.910503 |  0.857189 |  0.389257 |
+            ... | -0.563977 |  0.207162 |  0.163399 | -0.630345 | -0.486822 | -0.125787 |
+            ... | -0.434994 |  0.249221 |  0.616890 | -0.660236 | -1.197566 |  7.735832 |
+            ... |  0.032478 |  0.351444 |  0.319501 |  1.794769 |  1.239423 | -5.510332 |
+            ... |  0.085569 |  0.175148 |  0.399244 |  0.301771 |  1.278387 | -8.648084 |
+            ... | -0.028844 |  0.273307 |  0.268801 |  0.946077 | -0.359133 |  5.099971 |
+            ... | -0.665312 |  0.491445 |  0.030328 |  0.545625 |  0.499162 | -6.126528 |
+            ... +-----------+-----------+-----------+-----------+-----------+-----------+
+            >>> # Unscale the new dataset to retreive previous data scale
+            >>> unscaled_df = scaler.unscaleMinMax(scaled_df)
+            >>> print(unscaled_df)
+            ... +-----------+-----------+-----------+-----------+-----------+-----------+
+            ... |        X0 |        X1 |        X2 |        X3 |        X4 |         Y |
+            ... +-----------+-----------+-----------+-----------+-----------+-----------+
+            ... |  0.977594 |  1.669510 | -1.385569 |  0.696975 | -1.207098 |  8.501692 |
+            ... | -0.953802 |  1.025392 | -0.639291 |  0.658251 |  0.746814 | -7.186085 |
+            ... | -0.148140 | -0.972473 |  0.843746 |  1.306845 |  0.269834 |  1.939924 |
+            ... |  0.499385 | -1.081926 |  2.646441 |  0.910503 |  0.857189 |  0.389257 |
+            ... | -0.563977 | -0.511933 | -0.726744 | -0.630345 | -0.486822 | -0.125787 |
+            ... | -0.434994 | -0.396210 |  1.101739 | -0.660236 | -1.197566 |  7.735832 |
+            ... |  0.032478 | -0.114952 | -0.097337 |  1.794769 |  1.239423 | -5.510332 |
+            ... |  0.085569 | -0.600019 |  0.224186 |  0.301771 |  1.278387 | -8.648084 |
+            ... | -0.028844 | -0.329940 | -0.301762 |  0.946077 | -0.359133 |  5.099971 |
+            ... | -0.665312 |  0.270254 | -1.263288 |  0.545625 |  0.499162 | -6.126528 |
+            ... +-----------+-----------+-----------+-----------+-----------+-----------+
         """
         super(Scaler, self).__init__()
         self.data = data.copy()
@@ -293,10 +349,10 @@ class Scaler:
             _mean = self.data[c].mean()
             _std = self.data[c].std()
             _scale_temp = {'min': float(_min),
-                          'max': float(_max),
-                          'mean': float(_mean),
-                          'std': float(_std),
-                          }
+                           'max': float(_max),
+                           'mean': float(_mean),
+                           'std': float(_std),
+                           }
             self.scalers.update({c: _scale_temp})
 
     def _col_to_list(self, columns):
