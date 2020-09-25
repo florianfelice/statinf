@@ -5,6 +5,9 @@ STATINF
    :target: https://pepy.tech/project/statinf
 .. image:: https://badge.fury.io/py/statinf.svg
    :target: https://pypi.org/project/statinf/
+.. image:: https://github.com/fluidicon.png
+    :width: 32
+    :target: https://github.com/florianfelice/statinf
 
 This library aims at re-implementing standard statistical tools (such as OLS, logistic regression, Neural Network) and is built on top of `numpy`_
 for handling data and `theano`_ for differential computing.
