@@ -299,6 +299,7 @@ class GLM:
         t_values = betas / self._std_errors()
 
         p_values = [round(2 * (1 - scp.t.cdf(np.abs(i[0]), (len(X) - 1))), 5) for i in t_values]
+        z = scp.norm.ppf(0.975)
 
         summary_df = pd.DataFrame()
         summary_df["Variables"] = ['(Intercept)'] + self.X_col if self.fit_intercept else self.X_col
@@ -307,6 +308,8 @@ class GLM:
         summary_df["t-values"] = t_values
         summary_df["Probabilities"] = p_values
         summary_df["Significance"] = summary_df["Probabilities"].map(lambda x: get_significance(x))
+        summary_df["CI_lo"] = summary_df["Coefficients"] - z * summary_df["Standard Errors"]
+        summary_df["CI_hi"] = summary_df["Coefficients"] + z * summary_df["Standard Errors"]
 
         # Null model for null log likelihood
         null_mod = self.__class__(formula=f'{self.Y_col} ~ 1', data=self.df)
@@ -335,14 +338,14 @@ class GLM:
             add_sep = '=' * np.max([max_var - 17, 0])
             space = np.max([max_var, 17])
 
-            summ = f"=================================================================================={add_sep}\n"
-            summ += f"|                                  Logit summary                                 {add_sp}|\n"
-            summ += f"=================================================================================={add_sep}\n"
-            summ += f"| McFadden's R²   =       {_r2:10} | McFadden's R² Adj.  =          {ar2:10} {add_sp}|\n"
-            summ += f"| Log-Likelihood  =       {_ll:10} | Null Log-Likelihood =          {nll:10} {add_sp}|\n"
-            summ += f"| LR test p-value =       {lrp:10} | Covariance          =          {_ct:10} {add_sp}|\n"
-            summ += f"| n               =       {_n_:10} | p                   =          {_p_:10} {add_sp}|\n"
-            summ += f"| Iterations      =       {_it:10} | Convergence         =           {_cv:5} {add_sp}|\n"
+            summ = f"============================================================================================================={add_sep}\n"
+            summ += f'|                                              Logit summary                                                {add_sp}|\n'
+            summ += f"============================================================================================================={add_sep}\n"
+            summ += f"| McFadden's R²          =              {_r2:10} | McFadden's R² Adj.         =                {ar2:10} {add_sp}|\n"
+            summ += f"| Log-Likelihood         =              {_ll:10} | Null Log-Likelihood        =                {nll:10} {add_sp}|\n"
+            summ += f"| LR test p-value        =              {lrp:10} | Covariance                 =                {_ct:10} {add_sp}|\n"
+            summ += f"| n                      =              {_n_:10} | p                          =                {_p_:10} {add_sp}|\n"
+            summ += f"| Iterations             =              {_it:10} | Convergence                =                 {_cv:5} {add_sp}|\n"
             summ += summary(summary_df)
             return(summ)
 

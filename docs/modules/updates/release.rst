@@ -8,6 +8,71 @@ We show most important releases that included new features.
 Library versions in between are used to fix bugs and implement improvement suggested by users' feedback.
 
 
+
+----
+
+
+**********************************************************************************************
+1.0.28 - September 27, 2020 - Time series module :py:meth:`statinf.stats.timeseries` available
+**********************************************************************************************
+
+New functions for time series are now available in the :obj:`statinf.stats` module.
+
+The current functions available are:
+
+* :py:meth:`statinf.stats.timeseries.adf_test` for Augmented Dickey-Fuller test.
+
+* :py:meth:`statinf.stats.timeseries.coint_test` for cointegration test.
+
+More functionalities will soon be available.
+
+^^^^^^^^^^^^^^
+How to use it?
+^^^^^^^^^^^^^^
+
+
+.. code::
+
+    from statinf.stats import adf_test, coint_test
+    
+    import requests
+    import pandas as pd
+
+    # Function to generate data
+    def get_bitfinex_asset(asset, ts_start=None, ts_end=None):
+        # Defaults from 1 January 2018, 00:00:00
+        ts_ms_start = 1514768400000 if ts_start is None else ts_start
+        ts_ms_end = int(datetime.datetime.now().timestamp()*100) if ts_end is None else ts_end
+        url = 'https://api.bitfinex.com/v2/candles/trade:1D:t' + asset + '/hist'
+        params = { 'start': ts_ms_start, 'end': ts_ms_end, 'sort': 1}
+        r = requests.get(url, params=params)
+        data = r.json()
+        return pd.DataFrame(data)[2]
+
+    # Create the data series
+    series = get_bitfinex_asset(asset='BTCUSD')
+    series2 = get_bitfinex_asset(asset='NEOUSD')
+
+    # Test stationarity of the first series with ADF test
+    ts.adf_test(series, trend='ct')
+    # Test cointegration of both series
+    ts.coint_test(series, series2, trend='ct')
+
+
+
+^^^^^^^^^^^^^^^^^^
+How to install it?
+^^^^^^^^^^^^^^^^^^
+
+.. code::
+
+    pip3 install statinf==1.0.28
+
+
+See more details: :py:meth:`statinf.stats.timeseries.adf_test` and :py:meth:`statinf.stats.timeseries.coint_test`
+
+
+
 ----
 
 

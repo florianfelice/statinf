@@ -25,3 +25,4 @@ statinf/regressions/glm_test.py
 statinf/stats/__init__.py
 statinf/stats/descriptive.py
 statinf/stats/tests.py
+statinf/stats/timeseries.py

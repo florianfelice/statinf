@@ -67,6 +67,7 @@ Statistics
 
     stats/descriptive
     stats/tests
+    stats/timeseries
 
 
 Machine Learning

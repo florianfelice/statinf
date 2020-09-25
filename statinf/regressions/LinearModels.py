@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import stats as scp
 import pandas as pd
+import math
+from scipy.stats import norm
 
 from ..data.ProcessData import parse_formula
 from ..misc import summary, get_significance
@@ -44,7 +46,7 @@ class OLS:
         # Use intercept or only explanatory variables
         self.fit_intercept = fit_intercept
         # Beta standard errors for confidence intervals
-        self.std_err_beta = None
+        self.std_err = None
 
     def _get_X(self):
         if self.fit_intercept:
@@ -161,6 +163,68 @@ class OLS:
         MSR = self.rss() / self.dfe
         return(MSE / MSR)
 
+    def _std_err(self):
+        """Standard error function
+
+        :formula:
+
+            .. math:: \\mathbb{V}(\\beta) = \\sigma^{2} X'X
+
+            where :math:`\\sigma^{2} = \\frac{RSS}{n - p -1}`
+        
+        :return: Standard error of the estimates.
+        :rtype: :obj:`numpy.array`
+        """
+        X = self._get_X()
+
+        sigma_2 = (sum((self._get_error())**2)) / (len(X) - len(X[0]))
+        variance_beta = sigma_2 * (np.linalg.inv(np.dot(X.T, X)).diagonal())
+        self.std_err = np.sqrt(variance_beta)
+        return self.std_err
+    
+    def _loglikelihood(self):
+        """Standard error function
+
+        :formula:
+
+            .. math:: l = \\dfrac{n}{2} \\log{2 \\pi} - \\dfrac{n}{2} \\log{\\dfrac{RSS}{n}} - \\dfrac{n}{2}
+        
+        :return: Log-likelihood.
+        :rtype: :obj:`float`
+        """
+        _ll = - (self.n / 2) * np.log(2 * math.pi) - (self.n / 2) * np.log(self.rss()/self.n) - (self.n / 2)
+        self.loglikelihood = _ll
+        return _ll
+    
+    def _aic(self, metric='aic'):
+        """Akaike Information Criterion and Bayesian Information Criterion
+
+        :param metric: Define what metric to return, defaults to 'aic'.
+        :type return_df: :obj:`str`
+
+        :formula: * AIC:
+
+            .. math:: AIC = - 2 \\log{L(\\theta)} + 2 p
+
+            * BIC:
+
+            .. math:: AIC = - 2 \\log{L(\\theta)} + \\log{n} p
+
+            where :math:`p` is the number of covariates and :math:`L` the likelihood function.
+
+        :references: * Cameron, A. C., & Trivedi, P. K. (2009). Microeconometrics using stata (Vol. 5, p. 706). College Station, TX: Stata press.
+
+        :return: Information criterion.
+        :rtype: :obj:`float`
+        """
+        self.aic = -2 * self._loglikelihood() + 2 * self.p
+        self.bic = -2 * self._loglikelihood() + np.log(self.n) * self.p
+        
+        if metric.lower() == 'bic':
+            return self.bic
+        else:
+            return self.aic
+
     def summary(self, return_df=False):
         """Statistical summary for OLS
 
@@ -191,6 +255,7 @@ class OLS:
         :references: * Student. (1908). The probable error of a mean. Biometrika, 1-25.
             * Shen, Q., & Faraway, J. (2004). `An F test for linear models with functional responses <https://www.jstor.org/stable/24307230>`_. Statistica Sinica, 1239-1257.
             * Wooldridge, J. M. (2016). `Introductory econometrics: A modern approach <https://faculty.arts.ubc.ca/nfortin/econ495/IntroductoryEconometrics_AModernApproach_FourthEdition_Jeffrey_Wooldridge.pdf>`_. Nelson Education.
+            * Cameron, A. C., & Trivedi, P. K. (2009). Microeconometrics using stata (Vol. 5, p. 706). College Station, TX: Stata press.
 
         :return: Model's summary.
         :rtype: :obj:`pandas.DataFrame` or :obj:`str`
@@ -199,20 +264,21 @@ class OLS:
         betas = self.get_betas()
         X = self._get_X()
 
-        sigma_2 = (sum((self._get_error())**2)) / (len(X) - len(X[0]))
-        variance_beta = sigma_2 * (np.linalg.inv(np.dot(X.T, X)).diagonal())
-        self.std_err_beta = np.sqrt(variance_beta)
-        t_values = betas / self.std_err_beta
+        self.std_err = self._std_err()
+        t_values = betas / self.std_err
 
         p_values = [2 * (1 - scp.t.cdf(np.abs(i), (len(X) - 1))) for i in t_values]
+        z = norm.ppf(0.975)
 
         summary_df = pd.DataFrame()
         summary_df["Variables"] = ['(Intercept)'] + self.X_col if self.fit_intercept else self.X_col
         summary_df["Coefficients"] = betas
-        summary_df["Standard Errors"] = self.std_err_beta
+        summary_df["Standard Errors"] = self.std_err
         summary_df["t-values"] = t_values
         summary_df["Probabilities"] = p_values
         summary_df["Significance"] = summary_df["Probabilities"].map(lambda x: get_significance(x))
+        summary_df["CI_lo"] = summary_df["Coefficients"] - z * summary_df["Standard Errors"]
+        summary_df["CI_hi"] = summary_df["Coefficients"] + z * summary_df["Standard Errors"]
 
         _r2 = round(self.r_squared(), 5)
         ar2 = round(self.adjusted_r_squared(), 5)
@@ -220,6 +286,9 @@ class OLS:
         _p_ = self.p
         #
         fis = round(self._fisher(), 3)
+        llf = round(self._loglikelihood(), 3)
+        aic = round(self._aic(), 3)
+        
         #
         if return_df:
             return(summary_df)
@@ -228,14 +297,14 @@ class OLS:
 
             add_sp = ' ' * np.max([max_var - 17, 0])
             add_sep = '=' * np.max([max_var - 17, 0])
-            space = np.max([max_var, 17])
 
-            summ = f"=================================================================================={add_sep}\n"
-            summ += f'|                                  OLS summary                                   {add_sp}|\n'
-            summ += f"=================================================================================={add_sep}\n"
-            summ += f"| R²             =         {_r2:10} | R² Adj.      =                {ar2:10} {add_sp}|\n"
-            summ += f"| n              =         {_n_:10} | p            =                {_p_:10} {add_sp}|\n"
-            summ += f"| Fisher value   =    {fis:15} |                                          {add_sp}|\n"
+            summ = f"============================================================================================================={add_sep}\n"
+            summ += f'|                                                OLS summary                                                {add_sp}|\n'
+            summ += f"============================================================================================================={add_sep}\n"
+            summ += f"| n                   =                  {_n_:10} | p                 =                        {_p_:10} {add_sp}|\n"
+            summ += f"| R²                  =                  {_r2:10} | R² Adj.           =                        {ar2:10} {add_sp}|\n"
+            summ += f"| Log-likelihood      =             {llf:15} | AIC               =                        {aic:10} {add_sp}|\n"
+            summ += f"| Fisher value        =             {fis:15} |                                                       {add_sp}|\n"
             summ += summary(summary_df)
             return(summ)
 
@@ -271,13 +340,13 @@ class OLS:
         else:
             assert (conf_level > 0.) & (conf_level < 1.), "Your confidence level needs to be between 0 and 1."
             # User needs CI
-            if self.std_err_beta is None:
+            if self.std_err is None:
                 _ = self.summary(return_df=True)
 
             quant_order = 1 - ((1 - conf_level) / 2)
             cv = scp.norm.ppf(quant_order)
             pred = pd.DataFrame({'Prediction': y_pred,
-                                 'LowerBound': y_pred - cv * (self.std_err_beta.sum() / np.sqrt(self.n - 1)),
-                                 'UpperBound': y_pred + cv * (self.std_err_beta.sum() / np.sqrt(self.n - 1))})
+                                 'LowerBound': y_pred - cv * (self.std_err.sum() / np.sqrt(self.n - 1)),
+                                 'UpperBound': y_pred + cv * (self.std_err.sum() / np.sqrt(self.n - 1))})
 
         return pred

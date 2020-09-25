@@ -3,6 +3,7 @@ import math
 from scipy import stats as scp
 
 from . import descriptive as desc
+from ..misc import test_summary
 
 
 def ttest(x, mu=0, alpha=0.05, is_bernoulli=False, two_sided=True, return_tuple=False):
@@ -63,10 +64,12 @@ def ttest(x, mu=0, alpha=0.05, is_bernoulli=False, two_sided=True, return_tuple=
     # Define test degrees of freedom
     if two_sided:
         quant_order = 1 - (alpha / 2)
-        h0 = f'H0: X_bar = {mu}'
+        h0 = f'X_bar = {mu}'
+        h1 = f'X_bar != {mu}'
     else:
         quant_order = 1 - alpha
-        h0 = f'H0: X_bar <= {mu}'
+        h0 = f'X_bar <= {mu}'
+        h1 = f'X_bar > {mu}'
 
     # Input vector as array
     x = np.asarray(x)
@@ -96,33 +99,16 @@ def ttest(x, mu=0, alpha=0.05, is_bernoulli=False, two_sided=True, return_tuple=
     else:
         cv = scp.t.ppf(quant_order, df=df)
 
-    # Format for output
-    dfree = round(df, 10 - len(str(int(df))))
-    cri_value = round(cv, 11 - len(str(int(cv))))
-    t_val = round(t, 8 - len(str(int(t))))
-    p_v = round(p, 6 - len(str(int(p))))
-    r = 'True' if t < cri_value else 'False'
-    nb_side = 'two' if two_sided else 'one'
-    if t < cv:
-        conclusion = ' * We cannot reject the hypothesis ' + h0 + '\n'
-    else:
-        conclusion = ' * We reject the hypothesis ' + h0 + '\n'
-
-    # Test summary
-    summ = f"+------------------------------------------------------------+\n"
-    summ += "|                   One Sample Student test                  |\n"
-    summ += f"+------------+----------------+------------+---------+-------+\n"
-    summ += f"|     df     | Critical value | T-value    | p-value |   H0  |\n"
-    summ += f"+------------+----------------+------------+---------+-------+\n"
-    summ += f"| {dfree:10} | {cri_value:14} | {t_val:10} | {p_v:7} | {r:5} |\n"
-    summ += f"+------------+----------------+------------+---------+-------+\n"
-    summ += f" * Confidence level is {(1 - alpha)*100}%, we need p > {round(1 - quant_order, 3)} for {nb_side}-sided test\n"
-    summ += conclusion
+    _summ = test_summary(df=df, critical_value=cv, t_value=t,
+                         p_value=p,
+                         title='One Sample Student test',
+                         h0=h0, h1=h1,
+                         alpha=alpha)
 
     if return_tuple:
         return t, cv, p
     else:
-        return summ
+        return _summ
 
 
 # function for calculating the t-test for two independent samples
@@ -192,12 +178,12 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=F
     # Define test degrees of freedom
     if two_sided:
         quant_order = 1 - (alpha / 2)
-        h0 = f'H0: X1 = X2'
-        nb_side = 'two'
+        h0 = f'X1_bar = X2_bar'
+        h1 = f'X1_bar != X2_bar'
     else:
         quant_order = 1 - alpha
-        h0 = f'H0: X1 <= X2'
-        nb_side = 'one'
+        h0 = f'X1 <= X2'
+        h1 = f'X1 > X2'
 
     # Sample sizes
     n1, n2 = len(x), len(y)
@@ -231,35 +217,21 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=F
         else:
             p = 2.0 * (1.0 - scp.t.cdf(math.fabs(t), df=df))
 
-    # Format for output
-    dfree = round(df, 8 - len(str(int(df))))
-    cri_value = round(cv, 12 - len(str(int(cv))))
-    t_val = round(t, 8 - len(str(int(t))))
-    p_v = round(p, 6 - len(str(int(p))))
-    r = 'True' if t < cv else 'False'
-    if t < cri_value:
-        conclusion = f' * We cannot reject the hypothesis {h0} \n'
-    else:
-        conclusion = f' * We reject the hypothesis {h0} \n'
+    extra = f" * E(X1) = {round(mean1, 3)} and E(X2) = {round(mean2, 3)} \n"
+    extra += " * Performed test for paired samples \n" if paired else ''
+    extra += " * Large sample sizes, t ~ N(0, 1) from CLT" if (n1 > 30) & (n2 > 30) else ' * Small sample sizes, assumed t ~ T(n-1)'
 
-    # Test summary
-    summ = f"+------------------------------------------------------------+\n"
-    summ += "|                   Two Samples Student test                 |\n"
-    summ += f"+------------+----------------+------------+---------+-------+\n"
-    summ += f"|     df     | Critical value | T-value    | p-value |   H0  |\n"
-    summ += f"+------------+----------------+------------+---------+-------+\n"
-    summ += f"| {dfree:10} | {cri_value:14} | {t_val:10} | {p_v:7} | {r:5} |\n"
-    summ += f"+------------+----------------+------------+---------+-------+\n"
-    summ += f" * E(X1) = {round(mean1, 3)} and E(X2) = {round(mean2, 3)} \n"
-    summ += conclusion
-    summ += f" * Confidence level is {(1 - alpha)*100}%, we need p > {round(1 - quant_order, 3)} for {nb_side}-sided test\n"
-    summ += " * Performed test for paired samples \n" if paired else ''
-    summ += " * Large sample sizes, t ~ N(0, 1) from CLT" if (n1 > 30) & (n2 > 30) else ' * Small sample sizes, assumed t ~ T(n-1)'
+    _summ = test_summary(df=df, critical_value=cv, t_value=t,
+                         p_value=p,
+                         title='Two Samples Student test',
+                         h0=h0, h1=h1,
+                         alpha=alpha,
+                         extra=extra)
 
     if return_tuple:
         return t, cv, p
     else:
-        return summ
+        return _summ
 
 
 def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
@@ -320,7 +292,8 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
     n = len(x)
 
     if type(x2) == str:
-        h0 = f"H0: F(x) ~ {x2}"
+        h0 = f"F(x) ~ {x2}"
+        h1 = f"F(x) is not {x2}"
         if x2.lower() in ['normal', 'norm', 'gaussian', 'gauss']:
             y = np.random.normal(size=n, **kwargs)
         elif x2.lower() in ['beta']:
@@ -339,7 +312,8 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
             raise ValueError('cdf value for x2 is not valid.')
     else:
         y = np.asarray(x2)
-        h0 = "H0: F(x) = G(x)"
+        h0 = "F(x) = G(x)"
+        h1 = "F(x) and G(x) have different distributions"
 
     # Sample sizes
     m = len(y)
@@ -357,30 +331,13 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
     cv = scp.kstwobign.ppf(quant_order)
     p = 1.0 - scp.kstwobign.cdf(math.fabs(k))
 
-    # Format for output
-    d_val = round(d, 8 - len(str(int(d))))
-    cri_value = round(cv, 12 - len(str(int(cv))))
-    k_val = round(k, 8 - len(str(int(k))))
-    p_v = round(p, 6 - len(str(int(p))))
-    r = 'True' if k < cv else 'False'
-
-    if k < cri_value:
-        conclusion = f' * We cannot reject the hypothesis {h0} \n'
-    else:
-        conclusion = f' * We reject the hypothesis {h0} \n'
-
-    # Test summary
-    summ = f"+------------------------------------------------------------+\n"
-    summ += "|                   Kolmogorov-Smirnov test                  |\n"
-    summ += f"+------------+----------------+------------+---------+-------+\n"
-    summ += f"| D value    | Critical value | K-value    | p-value |   H0  |\n"
-    summ += f"+------------+----------------+------------+---------+-------+\n"
-    summ += f"| {d_val:10} | {cri_value:14} | {k_val:10} | {p_v:7} | {r:5} |\n"
-    summ += f"+------------+----------------+------------+---------+-------+\n"
-    summ += conclusion
-    summ += f" * Confidence level is {(1 - alpha)*100}%, we need p > {round(1 - quant_order, 3)}\n"
+    _summ = test_summary(df=n, critical_value=cv, t_value=k,
+                         p_value=p, alpha=alpha,
+                         title='Kolmogorov-Smirnov test',
+                         h0=h0, h1=h1,
+                         extra=f' * The D-value is: {round(d, 5)}')
 
     if return_tuple:
-        return k, cv, p
+        return t, cv, p
     else:
-        return summ
+        return _summ

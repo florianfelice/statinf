@@ -270,6 +270,8 @@ def create_dataset(data, look_back=1):
     return np.array(dataX), np.array(dataY)
 
 
+#######################################################################################################################
+
 # Scale dataset
 class Scaler:
     def __init__(self, data, columns):
