@@ -1,6 +1,7 @@
 import warnings
 import math
 import numpy as np
+import pandas as pd
 from scipy.stats import norm
 
 # Create custom warning: Value
@@ -10,6 +11,7 @@ class ValueWarning(UserWarning):
 # Create custom warning: Convergence
 class ConvergenceWarning(UserWarning):
     pass
+
 
 def get_significance(proba):
     if proba < 0.001:
@@ -22,6 +24,7 @@ def get_significance(proba):
         return('  .')
     else:
         return('   ')
+
 
 def summary(s):
     """Print summary data frame to string
@@ -66,6 +69,7 @@ def summary(s):
     summ += f"============================================================================================================={add_sep}\n"
     return summ
 
+
 def test_summary(df, critical_value, t_value, p_value, alpha=0.05, title='', h0='H0', h1='H0 does not hold', extra='', h0_conclu='', h1_conclu=''):
 
     # Format for output
@@ -97,3 +101,45 @@ def test_summary(df, critical_value, t_value, p_value, alpha=0.05, title='', h0=
     summ += extra
 
     return summ
+
+
+def _to_array(x, name='x'):
+    
+    warnings.filterwarnings('ignore')
+    
+    if type(x) in [pd.Series, pd.DataFrame]:
+        return np.array(x.values)
+    elif type(x) in [list]:
+        return np.array(x)
+    elif type(x) == np.ndarray:
+        return x
+    else:
+        raise TypeError(f'Type for {name} is not valid.')
+    warnings.filterwarnings('default')
+
+
+def _to_list(x, name='x'):
+    warnings.filterwarnings('ignore')
+    if type(x) in [pd.Series, pd.DataFrame]:
+        return list(x.values)
+    elif type(x) == list:
+        return x
+    elif type(x) == np.ndarray:
+        if x.shape == (len(x), 1):
+            return [x[0] for x in np.asarray(x)]
+        elif x.shape == (len(x),):
+            return list(x)
+        else:
+            raise TypeError(f'Cannot properly read shape for {name}.')
+    else:
+        raise TypeError(f'Type for {name} is not valid.')
+    warnings.filterwarnings('default')
+
+
+def format_object(x, to_type='array', name='x'):
+    if to_type in ['array', 'ndarray', 'to_array', 'to array']:
+        return _to_array(x, name=name)
+    elif to_type in ['list', 'to_list', 'to list']:
+        return _to_list(x, name=name)
+    else:
+        raise ValueError(f'Value for to_type is not value. Can either be array or list. Got {to_type}.')

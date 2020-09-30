@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import math
 
+from ..misc import format_object
+
 
 class BinaryPerformance:
     def __init__(self, y_true, y_pred):
@@ -14,34 +16,9 @@ class BinaryPerformance:
         :type y_pred: :obj:`numpy.ndarray`
         """
         warnings.filterwarnings('ignore')
-        # Format y_true
-        if type(y_true) in [pd.Series, pd.DataFrame]:
-            true = list(y_true.values)
-        elif type(y_true) == list:
-            true = y_true
-        elif type(y_true) == np.ndarray:
-            if y_true.shape == (len(y_true), 1):
-                true = [x[0] for x in np.asarray(y_true)]
-            elif y_true.shape == (len(y_true),):
-                true = list(y_true)
-            else:
-                raise TypeError('Cannot properly read shape for y_true.')
-        else:
-            raise TypeError('Type for y_true is not valid.')
-        # Format y_pred
-        if type(y_pred) in [pd.Series, pd.DataFrame]:
-            pred = list(y_pred.values)
-        elif type(y_pred) == list:
-            pred = y_pred
-        elif type(y_pred) == np.ndarray:
-            if y_pred.shape == (len(y_pred), 1):
-                pred = [x[0] for x in np.asarray(y_pred)]
-            elif y_pred.shape == (len(y_pred),):
-                pred = list(y_pred)
-            else:
-                raise TypeError('Cannot properly read shape for y_pred.')
-        else:
-            raise TypeError('Type for y_pred is not valid.')
+        # Format y_true and y_pred
+        true = format_object(y_true, to_type='list', name='y_true')
+        pred = format_object(y_pred, to_type='list', name='y_pred')
 
         # Put data to a DF
         for_conf = pd.DataFrame({'true': true,
@@ -144,29 +121,9 @@ def mean_squared_error(y_true, y_pred, root=False):
     :rtype: float
     """
 
-    warnings.filterwarnings('ignore')
-
-    # Format y_true
-    if type(y_true) in [pd.Series, pd.DataFrame]:
-        true = np.array(y_true.values)
-    elif type(y_true) in [list]:
-        true = np.array(y_true)
-    elif type(y_true) == np.ndarray:
-        true = y_true
-    else:
-        raise TypeError('Type for y_true is not valid.')
-
-    # Format y_pred
-    if type(y_pred) in [pd.Series, pd.DataFrame]:
-        pred = np.array(y_pred.values)
-    elif type(y_pred) in [list]:
-        pred = np.array(y_pred)
-    elif type(y_pred) == np.ndarray:
-        pred = y_pred
-    else:
-        raise TypeError('Type for y_pred is not valid.')
-
-    warnings.filterwarnings('default')
+    true = format_object(y_true, to_type='array', name='y_true')
+    pred = format_object(y_pred, to_type='array', name='y_pred')
+    # pred = to_array(y_pred, 'y_pred')
 
     # Compute the square of the difference
     loss = (pred - true)**2
@@ -198,34 +155,9 @@ def mape(y_true, y_pred, weights=False):
     """
 
     warnings.filterwarnings('ignore')
-    # Format y_true
-    if type(y_true) in [pd.Series, pd.DataFrame]:
-        _true = list(y_true.values)
-    elif type(y_true) == list:
-        _true = y_true
-    elif type(y_true) == np.ndarray:
-        if y_true.shape == (len(y_true), 1):
-            _true = [x[0] for x in np.asarray(y_true)]
-        elif y_true.shape == (len(y_true),):
-            _true = list(y_true)
-        else:
-            raise TypeError('Cannot properly read shape for y_true.')
-    else:
-        raise TypeError('Type for y_true is not valid.')
-    # Format y_pred
-    if type(y_pred) in [pd.Series, pd.DataFrame]:
-        _pred = list(y_pred.values)
-    elif type(y_pred) == list:
-        _pred = y_pred
-    elif type(y_pred) == np.ndarray:
-        if y_pred.shape == (len(y_pred), 1):
-            _pred = [x[0] for x in np.asarray(y_pred)]
-        elif y_pred.shape == (len(y_pred),):
-            _pred = list(y_pred)
-        else:
-            raise TypeError('Cannot properly read shape for y_pred.')
-    else:
-        raise TypeError('Type for y_pred is not valid.')
+    # Format y_true and y_pred
+    _true = format_object(y_true, to_type='list', name='y_true')
+    _pred = format_object(y_pred, to_type='list', name='y_pred')
 
     preds = pd.DataFrame({'true': _true, 'pred': _pred})
     preds['abs_err'] = np.abs(preds['true'] - preds['pred'])

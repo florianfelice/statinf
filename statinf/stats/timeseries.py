@@ -3,7 +3,7 @@ import pandas as pd
 
 from scipy.stats import norm
 
-from ..misc import test_summary
+from ..misc import test_summary, format_object
 from ..regressions.LinearModels import OLS
 
 
@@ -158,25 +158,31 @@ def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
     else:
         best_lag = lag
 
-
-    # Parse lagged columns to use as formula 
+    # Parse lagged columns to use as formula
     cols_lag = [f'delta_lag_{i}' for i in range(2, best_lag+2)]
-    _lag_cols = ' + '.join(cols_lag)
-    _reg_formula = 'delta_lag_1 ~ x_lag_1 + ' + _lag_cols
+    
+    if best_lag == 0:
+        _reg_formula = 'delta_lag_1 ~ x_lag_1'
+    else:
+        _lag_cols = ' + '.join(cols_lag)
+        _reg_formula = 'delta_lag_1 ~ x_lag_1 + ' + _lag_cols
+    
     # Add constant variable if user requests
     _reg_formula += trend_var
 
+    # Prepare final data set with created lags
     filtered = _df[cols_lag + base_cols].dropna().copy()
     n = filtered.shape[0]
 
+    # Run OLS and get the stat value of x_lag_1 from summary
     _ols = OLS(_reg_formula, data=filtered, fit_intercept=cst)
-    
     _summ = _ols.summary(True)
-
     stat_value = _summ['t-values'][_summ.Variables == 'x_lag_1'].max()
     
+    # Get the MacKinnon pvalue based on the OLS stat value
     p_val = _MacKinnon_pvalues(statvalue=stat_value, trend=trend, k=1)
 
+    # Format summary output
     _summ = test_summary(df=n, critical_value=_crit_values[trend][1], t_value=stat_value,
                          p_value=p_val, title='Dickey-Fuller test',
                          extra=f' * Used {best_lag} lags',
@@ -232,7 +238,7 @@ def coint_test(x1, x2, lag='auto', trend='c', metric='aic', return_tuple=False):
     """
     _df = pd.DataFrame(x1).reset_index(drop=True)
     _df.columns = ['x1']
-    _df['x2'] = x2
+    _df['x2'] = format_object(x2, name='x2')
     _df['trend'] = _df.index + 1.
     _df['cst'] = 1.
     n, k = _df.shape

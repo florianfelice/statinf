@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import re
+import warnings
 from types import SimpleNamespace
 
 
@@ -85,7 +86,7 @@ def parse_formula(formula, data, check_values=True, return_all=False):
     :return: Transformed data set
     :rtype: :obj:`pandas.DataFrame`
     """
-
+    warnings.filterwarnings('ignore')
     # Parse formula
     no_space_formula = formula.replace(' ', '')
     Y_col = no_space_formula.split('~')[0]
@@ -153,7 +154,7 @@ def parse_formula(formula, data, check_values=True, return_all=False):
         data['1'] = 1
 
     # Putting pandas' warning message back
-    pd.options.mode.chained_assignment = "warn"
+    warnings.filterwarnings('default')
 
     if return_all:
         return data, X_col, Y_col
