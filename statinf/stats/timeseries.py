@@ -21,10 +21,10 @@ _stats_value_max = {
 }
 
 _dist_quant_small = {
-    "none": [0.6344, 1.2378, 3.2496*1e-2],
-    "c": [2.1659, 1.4412, 3.8269*1e-2],
-    "ct": [3.2512, 1.6047, 4.9588*1e-2],
-    "ctt": [4.0003, 1.658, 4.8288*1e-2],
+    "none": [0.6344, 1.2378, 3.2496 * 1e-2],
+    "c": [2.1659, 1.4412, 3.8269 * 1e-2],
+    "ct": [3.2512, 1.6047, 4.9588 * 1e-2],
+    "ctt": [4.0003, 1.658, 4.8288 * 1e-2],
 }
 
 _dist_quant_large = {
@@ -35,23 +35,23 @@ _dist_quant_large = {
 }
 
 _crit_values = {
-    'none': [-2.56574, -1.941  , -1.61682],
+    'none': [-2.56574, -1.941, -1.61682],
     'c': [-3.43035, -2.86154, -2.56677],
     'ct': [-3.95877, -3.41049, -3.12705],
     'ctt': [-4.37113, -3.83239, -3.55326],
 }
 
-
+# MacKinnon p-values
 def _MacKinnon_pvalues(statvalue, trend, k=1):
-    if statvalue <= _stats_value_max[trend][k-1]:
+    if statvalue <= _stats_value_max[trend][k - 1]:
         values = _dist_quant_small[trend]
     else:
         values = np.array(_dist_quant_large[trend]) * np.array([1, 1e-1, 1e-1, 1e-2])
-    
+
     return norm.cdf(np.polyval(values[::-1], statvalue))
 
 
-
+# Augmented Dickey-Fuller
 def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
     """
     Augmented Dickey-Fuller test.
@@ -68,12 +68,12 @@ def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
     :param lag: Lag to be considered in the series, defaults to 'auto'.
     :type lag: :obj:`int`, optional
     :param trend: Trend to be included in the regression, defaults to 'c'. Values can be:
-        
+
         * 'none': only consider the lag.
         * 'c': only include a constant.
         * 't': only include the trend component.
         * 'ct': include both constant and trend components.
-    
+
     :type trend: :obj:`str`, optional
     :param metric: Type of metric to use in the linear regression for selecting the optimal lag, defaults to 'aic'. Can either be 'aic' or 'bic'.
     :type metric: :obj:`str`, optional
@@ -105,6 +105,8 @@ def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
         * MacKinnon, J. G. (2010). Critical values for cointegration tests (No. 1227). Queen's Economics Department Working Paper.
     """
 
+    assert trend in ('none', 'c', 'ct'), f"The value for trend needs to be 'none', 'c' or 'ct'. Got '{trend}'"
+
     _df = pd.DataFrame(x).reset_index(drop=True)
     _df.columns = ['x']
     _df['trend'] = _df.index + 1.
@@ -118,16 +120,16 @@ def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
 
     if lag != 'auto':
         assert lag <= maxlag, ValueError(f'Lag value is too high. Maximum is {maxlag}, got {lag}')
-    
-    for l in range(1, maxlag+2):
-        _df[f'x_lag_{l}'] = _df.x.shift(l)
-        
-    for l in range(1, maxlag+2):
-        if l == 1:
-            _df[f'delta_lag_1'] = _df[f'x'] - _df[f'x_lag_1']
+
+    for _lag in range(1, maxlag + 2):
+        _df[f'x_lag_{_lag}'] = _df.x.shift(_lag)
+
+    for _lag in range(1, maxlag + 2):
+        if _lag == 1:
+            _df['delta_lag_1'] = _df['x'] - _df['x_lag_1']
         else:
-            _df[f'delta_lag_{l}'] = _df[f'x_lag_{l-1}'] - _df[f'x_lag_{l}']
-    
+            _df[f'delta_lag_{_lag}'] = _df[f'x_lag_{_lag - 1}'] - _df[f'x_lag_{_lag}']
+
     filtered = _df.dropna().copy()
 
     # Define whether we need to add trend component
@@ -141,8 +143,8 @@ def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
     if lag == 'auto':
         perfs = {}
         # Define optimal lag
-        for l in range(1, maxlag + 1):
-            _cols = [f'delta_lag_{i}' for i in range(2, l+2)]
+        for _lag in range(1, maxlag + 1):
+            _cols = [f'delta_lag_{i}' for i in range(2, _lag + 2)]
             _lag_cols = ' + '.join(_cols)
             _reg_formula = 'delta_lag_1 ~ x_lag_1 + ' + _lag_cols
             # Add constant variable if user requests
@@ -151,7 +153,7 @@ def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
             # Fit OLS
             temp_ols = OLS(_reg_formula, data=_temp_df, fit_intercept=cst)
             # perfs[l] = temp_ols
-            perfs.update({temp_ols._aic(): l})
+            perfs.update({temp_ols._aic(): _lag})
 
         best_perf = np.min([k for k in perfs.keys()])
         best_lag = perfs.get(best_perf) - 1
@@ -159,14 +161,14 @@ def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
         best_lag = lag
 
     # Parse lagged columns to use as formula
-    cols_lag = [f'delta_lag_{i}' for i in range(2, best_lag+2)]
-    
+    cols_lag = [f'delta_lag_{i}' for i in range(2, best_lag + 2)]
+
     if best_lag == 0:
         _reg_formula = 'delta_lag_1 ~ x_lag_1'
     else:
         _lag_cols = ' + '.join(cols_lag)
         _reg_formula = 'delta_lag_1 ~ x_lag_1 + ' + _lag_cols
-    
+
     # Add constant variable if user requests
     _reg_formula += trend_var
 
@@ -178,7 +180,7 @@ def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
     _ols = OLS(_reg_formula, data=filtered, fit_intercept=cst)
     _summ = _ols.summary(True)
     stat_value = _summ['t-values'][_summ.Variables == 'x_lag_1'].max()
-    
+
     # Get the MacKinnon pvalue based on the OLS stat value
     p_val = _MacKinnon_pvalues(statvalue=stat_value, trend=trend, k=1)
 
@@ -195,6 +197,7 @@ def adf_test(x, lag='auto', trend='c', metric='aic', return_tuple=False):
         return _summ
 
 
+# Cointegration test
 def coint_test(x1, x2, lag='auto', trend='c', metric='aic', return_tuple=False):
     """
     Cointegration test.
@@ -215,7 +218,7 @@ def coint_test(x1, x2, lag='auto', trend='c', metric='aic', return_tuple=False):
     :param return_tuple: [description], defaults to False
     :param return_tuple: Return a tuple with test statistic, p-value, and relation. Defaults to False.
     :type return_tuple: :obj:`bool`
-    
+
     :example:
 
     >>> from statinf import stats
@@ -231,7 +234,7 @@ def coint_test(x1, x2, lag='auto', trend='c', metric='aic', return_tuple=False):
 
     :return: Summary for the test or tuple statistic, critical value, p-value.
     :rtype: :obj:`str` or :obj:`tuple`
-    
+
     :references: * Hamilton, J. D. (1994). Time series analysis. Princeton university press, Princeton, NJ.
         * Wooldridge, J. M. (2010). Econometric analysis of cross section and panel data. MIT press.
         * MacKinnon, J. G. (1991). Critical values for cointegration tests. In Eds., Long-Run Economic Relationship: Readings in Cointegration.
@@ -255,7 +258,7 @@ def coint_test(x1, x2, lag='auto', trend='c', metric='aic', return_tuple=False):
     # sm_ols = lm.OLS(x1, _df[['x2', 'trend', 'cst']]).fit()
     # print(res)
     # print(sm_ols.resid)
-    
+
     if _ols.r_squared() < 1. - 1e-4:
         # In case of no perfect fit
         stat_value, p, bl, _n = adf_test(res, lag=lag, trend='none', metric=metric, return_tuple=True)
@@ -265,7 +268,7 @@ def coint_test(x1, x2, lag='auto', trend='c', metric='aic', return_tuple=False):
     p_val = _MacKinnon_pvalues(statvalue=stat_value, trend=trend, k=k)
 
     vars_rel = 'negative' if _summ_ols.Coefficients[(_summ_ols.Variables == 'x2')].max() < 0 else 'positive'
-    
+
     _summ = test_summary(df=n, critical_value=_crit_values[trend][1], t_value=stat_value,
                          p_value=p_val, title='Cointegration test',
                          h1_conclu=f' * The series seem to have a {vars_rel} relation',

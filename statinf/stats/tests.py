@@ -6,6 +6,7 @@ from . import descriptive as desc
 from ..misc import test_summary
 
 
+# One sample Student test
 def ttest(x, mu=0, alpha=0.05, is_bernoulli=False, two_sided=True, return_tuple=False):
     """One sample Student's test.
 
@@ -80,7 +81,7 @@ def ttest(x, mu=0, alpha=0.05, is_bernoulli=False, two_sided=True, return_tuple=
     x_bar = x.mean()
     # s estimator (variance)
     if is_bernoulli:
-        s2 = mu * (1 - mu)
+        s2 = x_bar * (1 - x_bar)
     else:
         s2 = desc.var(x)
 
@@ -111,8 +112,8 @@ def ttest(x, mu=0, alpha=0.05, is_bernoulli=False, two_sided=True, return_tuple=
         return _summ
 
 
-# function for calculating the t-test for two independent samples
-def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=False):
+# 2 samples Student test
+def ttest_2samp(x1, x2, alpha=0.05, paired=False, is_bernoulli=False, two_sided=True, return_tuple=False):
     """Two samples Student's test.
 
         If the samples are independent (:math:`X_{1} \\bot X_{2}`), we test:
@@ -143,6 +144,8 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=F
     :type alpha: :obj:`float`, optional
     :param paired: Performs one sample test of the difference if samples are paired, defaults to False.
     :type paired: :obj:`bool`, optional
+    :param is_bernoulli: Input variables follow a Bernoulli distribution, i.e. :math:`\\mathbf{X} \\sim \\mathcal{B}(p)` with :math:`p \\in [0, 1]`, defaults to False.
+    :type is_bernoulli: :obj:`bool`, optional
     :param two_sided: Perform a two-sided test, defaults to True.
     :type two_sided: :obj:`bool`, optional
     :param return_tuple: Return a tuple with t statistic, critical value and p-value, defaults to False.
@@ -153,7 +156,7 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=F
     >>> from statinf import stats
     >>> a = [30.02, 29.99, 30.11, 29.97, 30.01, 29.99]
     >>> b = [29.89, 29.93, 29.72, 29.98, 30.02, 29.98]
-    >>> stats.ttest(a, b)
+    >>> stats.ttest_2samp(a, b)
     ... +------------------------------------------------------------+
     ... |                   Two Samples Student test                 |
     ... +------------+----------------+------------+---------+-------+
@@ -178,12 +181,12 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=F
     # Define test degrees of freedom
     if two_sided:
         quant_order = 1 - (alpha / 2)
-        h0 = f'X1_bar = X2_bar'
-        h1 = f'X1_bar != X2_bar'
+        h0 = 'X1_bar = X2_bar'
+        h1 = 'X1_bar != X2_bar'
     else:
         quant_order = 1 - alpha
-        h0 = f'X1 <= X2'
-        h1 = f'X1 > X2'
+        h0 = 'X1 <= X2'
+        h1 = 'X1 > X2'
 
     # Sample sizes
     n1, n2 = len(x), len(y)
@@ -200,8 +203,12 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=F
         # Compute means
         mean1, mean2 = x.mean(), y.mean()
         # Compute standard deviations
-        s1 = desc.var(x)
-        s2 = desc.var(y)
+        if is_bernoulli:
+            s1 = mean1 * (1 - mean1)
+            s2 = mean2 * (1 - mean2)
+        else:
+            s1 = desc.var(x)
+            s2 = desc.var(y)
         # Compute grouped variance
         sd = np.sqrt(((n1 - 1) * s1 + (n2 - 1) * s2) / (n1 + n2 - 2))
         # Degrees of freedom
@@ -234,6 +241,7 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, two_sided=True, return_tuple=F
         return _summ
 
 
+# Kolmogorov-Smirnov test
 def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
     """Kolmogorov-Smirnov test for sample tests.
 
@@ -338,6 +346,6 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
                          extra=f' * The D-value is: {round(d, 5)}')
 
     if return_tuple:
-        return t, cv, p
+        return k, cv, p
     else:
         return _summ

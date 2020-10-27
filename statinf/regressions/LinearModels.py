@@ -171,7 +171,7 @@ class OLS:
             .. math:: \\mathbb{V}(\\beta) = \\sigma^{2} X'X
 
             where :math:`\\sigma^{2} = \\frac{RSS}{n - p -1}`
-        
+
         :return: Standard error of the estimates.
         :rtype: :obj:`numpy.array`
         """
@@ -181,21 +181,21 @@ class OLS:
         variance_beta = sigma_2 * (np.linalg.inv(np.dot(X.T, X)).diagonal())
         self.std_err = np.sqrt(variance_beta)
         return self.std_err
-    
+
     def _loglikelihood(self):
         """Standard error function
 
         :formula:
 
             .. math:: l = \\dfrac{n}{2} \\log{2 \\pi} - \\dfrac{n}{2} \\log{\\dfrac{RSS}{n}} - \\dfrac{n}{2}
-        
+
         :return: Log-likelihood.
         :rtype: :obj:`float`
         """
-        _ll = - (self.n / 2) * np.log(2 * math.pi) - (self.n / 2) * np.log(self.rss()/self.n) - (self.n / 2)
+        _ll = - (self.n / 2) * np.log(2 * math.pi) - (self.n / 2) * np.log(self.rss() / self.n) - (self.n / 2)
         self.loglikelihood = _ll
         return _ll
-    
+
     def _aic(self, metric='aic'):
         """Akaike Information Criterion and Bayesian Information Criterion
 
@@ -219,7 +219,7 @@ class OLS:
         """
         self.aic = -2 * self._loglikelihood() + 2 * self.p
         self.bic = -2 * self._loglikelihood() + np.log(self.n) * self.p
-        
+
         if metric.lower() == 'bic':
             return self.bic
         else:
@@ -288,7 +288,7 @@ class OLS:
         fis = round(self._fisher(), 3)
         llf = round(self._loglikelihood(), 3)
         aic = round(self._aic(), 3)
-        
+
         #
         if return_df:
             return(summary_df)
