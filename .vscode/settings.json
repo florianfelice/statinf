@@ -1,7 +1,7 @@
 {
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
-    "python.pythonPath": "/usr/bin/python3",
+    "python.pythonPath": "/home/florian/Automation/testlibs/.venv/bin/python",
     "restructuredtext.confPath": "${workspaceFolder}/docs",
     "autoDocstring.docstringFormat": "sphinx"
 }

@@ -71,6 +71,9 @@ Statistics
     stats/descriptive
     stats/tests
     stats/timeseries
+    stats/bayesian
+    stats/unsupervised
+    stats/nonparametrics
 
 
 Machine Learning

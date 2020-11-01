@@ -1,16 +1,21 @@
 import numpy as np
 
-import os, sys
+import os
+import sys
 import getpass
 
-sys.path.append(f"/Users/{getpass.getuser()}/Documents/statinf/")
-
+if sys.platform == 'darwin':
+    sys.path.append(f"/Users/{getpass.getuser()}/Documents/statinf/")
+elif sys.platform in ['linux', 'linux1', 'linux2']:
+    sys.path.append(f"/home/{getpass.getuser()}/statinf/")
+else:
+    sys.path.append(f"C:/Users/{getpass.getuser()}/Documents/statinf/")
 
 from statinf import stats
 
 
-a = [30.02, 29.99, 30.11, 29.97, 30.01, 29.99] # np.random.normal(loc=25, scale=1, size=N)
-b = [29.89, 29.93, 29.72, 29.98, 30.02, 29.98] # np.random.normal(loc=24.8, scale=1, size=N)
+a = [30.02, 29.99, 30.11, 29.97, 30.01, 29.99]  # np.random.normal(loc=25, scale=1, size=N)
+b = [29.89, 29.93, 29.72, 29.98, 30.02, 29.98]  # np.random.normal(loc=24.8, scale=1, size=N)
 
 tt = stats.ttest(a, mu=30)
 print(tt)

@@ -46,7 +46,7 @@ data_balance = 0.
 pc.verbose_display('=== GENERATE SYNTHETIC DATA ===\n', args.verbose)
 
 while (data_balance < 0.02) or (data_balance > 0.98):
-    coeffs_bin = np.random.uniform(low=-10, high=10, size = args.n_cols)
+    coeffs_bin = np.random.uniform(low=-10, high=10, size=args.n_cols)
     # Find the list of variables to train on
     X_bin = [f'X{i}' for i in range(len(coeffs_bin))]
 

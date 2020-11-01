@@ -11,8 +11,11 @@ OLS
     :show-inheritance:
 
 
-Example
--------
+Examples
+--------
+
+OLS
+***
 
 .. code-block:: python
 
@@ -20,10 +23,11 @@ Example
     from statinf.regressions import OLS
 
     # Generate a synthetic dataset
-    data = generate_dataset(coeffs=[1.2556, -0.465, 1.665414, 2.5444, -7.56445], n=1000, std_dev=2.6)
+    data = gd.generate_dataset(coeffs=[1.2556, -0.465, 1.665414, 2.5444, -7.56445], n=1000, std_dev=2.6)
     
     # We set the OLS formula
-    formula = "Y ~ X0+ X1 + X2 + X3 + X4 + X1*X2 + exp(X2)"
+    formula = "Y ~ X0 + X1 + X2 + X3 + X4 + X1*X2 + exp(X2)"
+    
     # We fit the OLS with the data, the formula and without intercept
     ols = OLS(formula, data, fit_intercept=False)
 
@@ -74,3 +78,11 @@ Output will be:
     2     10.824623   10.811708   10.837537
     3     -2.725563   -2.738477   -2.712649
     4      4.057040    4.044125    4.069954
+
+
+LinearBayes
+***********
+
+.. code-block:: python
+
+    from statinf.regressions import LinearBayes

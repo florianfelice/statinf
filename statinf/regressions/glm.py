@@ -281,9 +281,11 @@ class GLM:
             where :math:`LL` represents the log-likelihood.
 
         :references: * Student. (1908). The probable error of a mean. Biometrika, 1-25.
-            * Wooldridge, J. M. (2016). `Introductory econometrics: A modern approach <https://faculty.arts.ubc.ca/nfortin/econ495/IntroductoryEconometrics_AModernApproach_FourthEdition_Jeffrey_Wooldridge.pdf>`_. Nelson Education.
+            * Wooldridge, J. M. (2016). `Introductory econometrics: A modern approach
+              <https://faculty.arts.ubc.ca/nfortin/econ495/IntroductoryEconometrics_AModernApproach_FourthEdition_Jeffrey_Wooldridge.pdf>`_.
+              Nelson Education.
             * Agresti, A. (2003). Categorical data analysis (Vol. 482). John Wiley & Sons.
-            * Murphy, K. P. (2012). Machine learning: a probabilistic perspective.
+            * Murphy, K. P. (2012). Machine learning: a probabilistic perspective. MIT press.
 
         :return: Model's summary.
         :rtype: :obj:`pandas.DataFrame` or :obj:`str`

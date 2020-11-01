@@ -19,11 +19,14 @@ statinf/ml/losses.py
 statinf/ml/neuralnetwork.py
 statinf/ml/optimizers.py
 statinf/ml/performance.py
+statinf/nonparametrics/__init__.py
+statinf/nonparametrics/kernels.py
 statinf/regressions/LinearModels.py
 statinf/regressions/__init__.py
 statinf/regressions/glm.py
 statinf/regressions/glm_test.py
 statinf/stats/__init__.py
+statinf/stats/bayesian.py
 statinf/stats/descriptive.py
 statinf/stats/tests.py
 statinf/stats/timeseries.py

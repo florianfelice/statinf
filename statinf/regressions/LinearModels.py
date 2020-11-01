@@ -3,22 +3,24 @@ from scipy import stats as scp
 import pandas as pd
 import math
 from scipy.stats import norm
+import matplotlib.pyplot as plt
 
 from ..data.ProcessData import parse_formula
 from ..misc import summary, get_significance
-import matplotlib.pyplot as plt
+from ..nonparametrics.kernels import gaussian
 
-# TODO: Add Log-Likehood + AIC + BIC
+# TODO: Add Log-Likehood + AIC + BIC to OLS
 # TODO: Add dask for GPU usage
-# TODO: Add linear bayesian with sigma unknown #ybendou
+# TODO: Add LinearBayes with sigma unknown @ybendou
 
 
 class OLS:
 
     def __init__(self, formula, data, fit_intercept=False):
-        """Ordinary Least Squares regression
+        """Ordinary Least Squares regression.
 
-        :param formula: Regression formula to be run of the form :obj:`y ~ x1 + x2`. See :func:`~parse_formula` in `ProcessData <../../data/process.html#statinf.data.ProcessData.parse_formula>`_
+        :param formula: Regression formula to be run of the form :obj:`y ~ x1 + x2`. See :func:`~parse_formula` in
+                        `ProcessData <../../data/process.html#statinf.data.ProcessData.parse_formula>`_
         :type formula: :obj:`str`
         :param data: Input data with Pandas format.
         :type data: :obj:`pandas.DataFrame`
@@ -100,7 +102,8 @@ class OLS:
 
         :formula: .. math:: RSS = \\sum_{i=1}^{n} (y_{i} - \\hat{y}_{i})^{2}
 
-            where :math:`y_{i}` denotes the true/observed value of :math:`y` for individual :math:`i` and :math:`\\hat{y}_{i}` denotes the predicted value of :math:`y` for individual :math:`i`.
+            where :math:`y_{i}` denotes the true/observed value of :math:`y` for individual :math:`i`
+            and :math:`\\hat{y}_{i}` denotes the predicted value of :math:`y` for individual :math:`i`.
 
         :return: Residual Sum of Squares.
         :rtype: :obj:`float`
@@ -112,7 +115,8 @@ class OLS:
 
         :formula: .. math:: TSS = \\sum_{i=1}^{n} (y_{i} - \\bar{y})^{2}
 
-            where :math:`y_{i}` denotes the true/observed value of :math:`y` for individual :math:`i` and :math:`\\bar{y}_{i}` denotes the average value of :math:`y`.
+            where :math:`y_{i}` denotes the true/observed value of :math:`y` for individual :math:`i`
+            and :math:`\\bar{y}_{i}` denotes the average value of :math:`y`.
 
         :return: Total Sum of Squares.
         :rtype: :obj:`float`
@@ -156,7 +160,8 @@ class OLS:
 
             where :math:`p` denotes the number of estimates (i.e. explanatory variables) and :math:`n` the sample size
 
-        :references: Shen, Q., & Faraway, J. (2004). `An F test for linear models with functional responses <https://www.jstor.org/stable/24307230>`_. Statistica Sinica, 1239-1257.
+        :references: Shen, Q., & Faraway, J. (2004). `An F test for linear models with functional responses
+                     <https://www.jstor.org/stable/24307230>`_. Statistica Sinica, 1239-1257.
 
         :return: Value of the :math:`\\mathcal{F}`-statistic.
         :rtype: :obj:`float`
@@ -255,8 +260,11 @@ class OLS:
 
 
         :references: * Student. (1908). The probable error of a mean. Biometrika, 1-25.
-            * Shen, Q., & Faraway, J. (2004). `An F test for linear models with functional responses <https://www.jstor.org/stable/24307230>`_. Statistica Sinica, 1239-1257.
-            * Wooldridge, J. M. (2016). `Introductory econometrics: A modern approach <https://faculty.arts.ubc.ca/nfortin/econ495/IntroductoryEconometrics_AModernApproach_FourthEdition_Jeffrey_Wooldridge.pdf>`_. Nelson Education.
+            * Shen, Q., & Faraway, J. (2004). `An F test for linear models with functional responses <https://www.jstor.org/stable/24307230>`_.
+              Statistica Sinica, 1239-1257.
+            * Wooldridge, J. M. (2016). `Introductory econometrics: A modern approach
+              <https://faculty.arts.ubc.ca/nfortin/econ495/IntroductoryEconometrics_AModernApproach_FourthEdition_Jeffrey_Wooldridge.pdf>`_.
+              Nelson Education.
             * Cameron, A. C., & Trivedi, P. K. (2009). Microeconometrics using stata (Vol. 5, p. 706). College Station, TX: Stata press.
 
         :return: Model's summary.
@@ -353,146 +361,125 @@ class OLS:
 
         return pred
 
-class Linear_bayesian():
+
+class LinearBayes:
 
     def __init__(self):
         """
-            Class for a bayesian linear regression with known std of the residual distribution.
-            Inspired by https://jessicastringham.net/2018/01/03/bayesian-linreg/
-            Implementation of Machine Learning : A Probabilistic Perspective / Kevin P. Murphy page 232
-            
+            Class for a bayesian linear regression with **known standard deviation** of the residual distribution.
+
+            .. warning:: This function is still under development.
+                This is a beta version, please be aware that some functionalitie might not be available.
+                The full stable version soon will be released.
+
             :param w_0: mean of the prior distribution of the weights assuming it's a gaussian, default is 0.
-            :type  w_0: :obj:`numpy.array` 
-
+            :type  w_0: :obj:`numpy.array`
             :param V_0: covariance matrix of the prior distribution of the weights, default is the identity matrix.
-            :type  V_0: :obj:`numpy.array` 
-
+            :type  V_0: :obj:`numpy.array`
             :param w_n: mean of the posterior distribution of the weights after observing the data.
-            :type  w_n: :obj:`numpy.array` 
-
+            :type  w_n: :obj:`numpy.array`
             :param V_n: covariance matrix the posterior distribution of the weights after observing the data.
-            :type  V_n: :obj:`numpy.array` 
+            :type  V_n: :obj:`numpy.array`
+
+            :references: * Murphy, K. P. (2012). Machine learning: a probabilistic perspective.
+
+            :source: Inspired by: https://jessicastringham.net/2018/01/03/bayesian-linreg/
         """
         self.w_0 = None
         self.V_0 = None
         self.w_n = None
         self.V_n = None
 
-    def fit(self,X,y,true_sigma = None,w_0 = None,V_0 = None):
+    def fit(self, X, y, true_sigma=None, w_0=None, V_0=None):
         """
             Fits the data using a linear regression model, finds the posterior distribution of the weights given the std of the residuals known.
             The case with std unknown will be added in the next implementation.
 
-            :param X: data features.
-            :type  X: :obj:`numpy.array` 
-
-            :param y: data values.
-            :type  y: :obj:`numpy.array` 
-
-            :param true_sigma: std of the residual distribution.
-            :type  true_sigma: :obj:`float` 
-
-            :param w_0: mean of the prior distribution of the weights assuming it's a gaussian, default is 0.
-            :type  w_0: :obj:`float` 
-
-            :param V_0: covariance matrix of the prior distribution of the weights, default is the identity matrix.
-            :type  V_0: :obj:`float` 
+            :param X: Input data.
+            :type  X: :obj:`numpy.array`
+            :param y: Data values.
+            :type  y: :obj:`numpy.array`
+            :param true_sigma: Standard error of the residual distribution.
+            :type  true_sigma: :obj:`float`
+            :param w_0: Mean of the prior distribution of the weights assuming it's a gaussian, default is 0.
+            :type  w_0: :obj:`float`
+            :param V_0: Covariance matrix of the prior distribution of the weights, default is the identity matrix.
+            :type  V_0: :obj:`float`
         """
-        #Setting a gaussian prior of N(0,1) in case no prior is refered
-        if type(w_0) != np.ndarray and type(w_0) != list : 
-            w_0 = np.hstack([0]*(X.shape[1]+1))
-        if type(V_0) != np.ndarray and type(V_0) != list : 
-            V_0 = np.diag([1]*(X.shape[1]+1))**2
+        # Setting a gaussian prior of N(0,1) in case no prior is refered
+        if type(w_0) != np.ndarray and type(w_0) != list:
+            w_0 = np.hstack([0] * (X.shape[1] + 1))
+        if type(V_0) != np.ndarray and type(V_0) != list:
+            V_0 = np.diag([1] * (X.shape[1] + 1))**2
 
-        w_0 = w_0[:,None]
-        #Creating a new column for the bias term
+        w_0 = w_0[:, None]
+
+        # Creating a new column for the bias term
         phi = np.hstack((
-            np.ones((X.shape[0],1)),X
+            np.ones((X.shape[0], 1)), X
         ))
 
-        assert true_sigma != None, "Error, please specify a true_sigma"
-        
-        sigma_y = true_sigma #True std of the generated data 
+        assert true_sigma is not None, "Error, please specify a value for true_sigma"
+
+        sigma_y = true_sigma  # True std of the generated data
 
         inv_V_0 = np.linalg.inv(V_0)
-                
-        V_n = sigma_y**2 * np.linalg.inv(sigma_y**2 * inv_V_0 + (phi.T@phi))
-        w_n = V_n @ inv_V_0 @ w_0 + 1/(sigma_y**2) * V_n @ phi.T @ y
+
+        V_n = sigma_y**2 * np.linalg.inv(sigma_y**2 * inv_V_0 + (phi.T @ phi))
+        w_n = V_n @ inv_V_0 @ w_0 + 1 / (sigma_y**2) * V_n @ phi.T @ y
 
         self.w_0 = w_0
         self.V_0 = V_0
         self.w_n = w_n
         self.V_n = V_n
 
-    def gaussian(self,X,mu,cov):
-        """
-            Returns the pdf of a Gaussian kernel
-            :param X: data
-            :type X: :obj:`numpy.array`
-
-            :param mu: mean of the gaussian
-            :type mu: :obj:`numpy.array`
-
-            :param cov: covariance matrix
-            :type cov: :obj:`numpy.array`
-        """
-        X_centered = X-mu
-        n = X.shape[1]
-        return np.diagonal((1 / ((2 * np.pi) ** (n / 2) * np.linalg.det(cov) ** 0.5))*np.exp(-0.5*np.dot(np.dot(X_centered, np.linalg.inv(cov)), X_centered.T))).reshape(-1,1)
-
-    def plot_weight_distributions(self,res = 100,xlim = (-8,8),ylim = (-8,8)):
+    def plot_weight_distributions(self, res=100, xlim=(-8, 8), ylim=(-8, 8)):
         """
             Plots the weight distribution for the prior and the posterior probabilities.
 
-            :param res: resolution of the grid, default is 100.
+            :param res: Resolution of the grid, default is 100.
             :type res: :obj:`int`
-
-            :param xlim: a tuple of the min and max values of the grid along the x axis, default is (-8,8).
+            :param xlim: Tuple of the min and max values of the grid along the x axis, default is (-8,8).
             :type xlim: :obj:`tuple`
-
-            :param ylim: tuple of the min and max values of the grid along the y axis, default is (-8,8).
+            :param ylim: Tuple of the min and max values of the grid along the y axis, default is (-8,8).
             :type ylim: :obj:`tuple`
         """
 
         x = np.linspace(xlim[0], xlim[1], res)
         y = np.linspace(ylim[0], ylim[1], res)
-        xx, yy = np.meshgrid(x,y)
+        xx, yy = np.meshgrid(x, y)
         xxyy = np.c_[xx.ravel(), yy.ravel()]
 
-        zz_0 = self.gaussian(xxyy, self.w_0.reshape(1,-1), self.V_0).reshape(1,-1)[0].round(15)
-        zz_n = self.gaussian(xxyy, self.w_n.reshape(1,-1), self.V_n).reshape(1,-1)[0].round(15)
+        zz_0 = gaussian(xxyy, self.w_0.reshape(1, -1), self.V_0).reshape(1, -1)[0].round(15)
+        zz_n = gaussian(xxyy, self.w_n.reshape(1, -1), self.V_n).reshape(1, -1)[0].round(15)
         zz_0[zz_0 == 0] = np.nan
         zz_n[zz_n == 0] = np.nan
 
         # reshape and plot image
 
-        img_0 = zz_0.reshape(res,res)
-        img_n = zz_n.reshape(res,res)
-        plt.contourf(xx,yy,img_0,alpha = 0.5,cmap = plt.cm.RdBu,label = 'prior')
-        plt.contourf(xx,yy,img_n,alpha = 0.5,cmap = plt.cm.RdBu,label = 'posterior')
+        img_0 = zz_0.reshape(res, res)
+        img_n = zz_n.reshape(res, res)
+        plt.contourf(xx, yy, img_0, alpha=0.5, cmap=plt.cm.RdBu)
+        plt.contourf(xx, yy, img_n, alpha=0.5, cmap=plt.cm.RdBu)
         plt.title('Posterior and prior distributions of the weights')
 
-    def plot_posterior_line(self,X,y,n_lines = 200,res = 100, xlim = (-1,10)):
+    def plot_posterior_line(self, X, y, n_lines=200, res=100, xlim=(-1, 10)):
         """
             Plots the model's distribution sampled from the posterior distribution of the weights.
 
-            :param X: data features.
-            :type  X: :obj:`numpy.array` 
-
-            :param y: data values.
-            :type  y: :obj:`numpy.array` 
-
-            :param n_lines: number of lines sampled from the posterior distribution, default is 200.
+            :param X: Input data.
+            :type  X: :obj:`numpy.array`
+            :param y: Data values.
+            :type  y: :obj:`numpy.array`
+            :param n_lines: Number of lines sampled from the posterior distribution, default is 200.
             :type n_lines: :obj:`int`
-
-            :param res: resolution of the grid, default is 100.
+            :param res: Resolution of the grid, default is 100.
             :type res: :obj:`int`
-
-            :param xlim: a tuple of the min and max values of the grid along the x axis, default is (-1,10).
+            :param xlim: Tuple of the min and max values of the grid along the x axis, default is (-1,10).
             :type xlim: :obj:`tuple`
         """
 
-        w_posterior = np.random.randn(n_lines, self.w_n.shape[0]) @ self.V_n + self.w_n.reshape(1,-1)
+        w_posterior = np.random.randn(n_lines, self.w_n.shape[0]) @ self.V_n + self.w_n.reshape(1, -1)
         X_grid = np.linspace(xlim[0], xlim[1], res)
         X_grid = np.vstack((
             np.ones(X_grid.shape[0]),
@@ -500,7 +487,7 @@ class Linear_bayesian():
         )).T
 
         y_posterior = X_grid @ w_posterior.T
-        plt.fill_between(X_grid[:,1], y_posterior.min(axis = 1), y_posterior.max(axis = 1),alpha=0.5)
-        plt.scatter(X,y)
+        plt.fill_between(X_grid[:, 1], y_posterior.min(axis=1), y_posterior.max(axis=1), alpha=0.5)
+        plt.scatter(X, y)
         plt.title(f'{n_lines} lines sampled from the posterior distribution after including the data')
         plt.show()
