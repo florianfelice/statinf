@@ -6,9 +6,11 @@ from scipy.stats import norm
 
 from ..data.ProcessData import parse_formula
 from ..misc import summary, get_significance
+import matplotlib.pyplot as plt
 
 # TODO: Add Log-Likehood + AIC + BIC
 # TODO: Add dask for GPU usage
+# TODO: Add linear bayesian with sigma unknown #ybendou
 
 
 class OLS:
@@ -350,3 +352,155 @@ class OLS:
                                  'UpperBound': y_pred + cv * (self.std_err.sum() / np.sqrt(self.n - 1))})
 
         return pred
+
+class Linear_bayesian():
+
+    def __init__(self):
+        """
+            Class for a bayesian linear regression with known std of the residual distribution.
+            Inspired by https://jessicastringham.net/2018/01/03/bayesian-linreg/
+            Implementation of Machine Learning : A Probabilistic Perspective / Kevin P. Murphy page 232
+            
+            :param w_0: mean of the prior distribution of the weights assuming it's a gaussian, default is 0.
+            :type  w_0: :obj:`numpy.array` 
+
+            :param V_0: covariance matrix of the prior distribution of the weights, default is the identity matrix.
+            :type  V_0: :obj:`numpy.array` 
+
+            :param w_n: mean of the posterior distribution of the weights after observing the data.
+            :type  w_n: :obj:`numpy.array` 
+
+            :param V_n: covariance matrix the posterior distribution of the weights after observing the data.
+            :type  V_n: :obj:`numpy.array` 
+        """
+        self.w_0 = None
+        self.V_0 = None
+        self.w_n = None
+        self.V_n = None
+
+    def fit(self,X,y,true_sigma = None,w_0 = None,V_0 = None):
+        """
+            Fits the data using a linear regression model, finds the posterior distribution of the weights given the std of the residuals known.
+            The case with std unknown will be added in the next implementation.
+
+            :param X: data features.
+            :type  X: :obj:`numpy.array` 
+
+            :param y: data values.
+            :type  y: :obj:`numpy.array` 
+
+            :param true_sigma: std of the residual distribution.
+            :type  true_sigma: :obj:`float` 
+
+            :param w_0: mean of the prior distribution of the weights assuming it's a gaussian, default is 0.
+            :type  w_0: :obj:`float` 
+
+            :param V_0: covariance matrix of the prior distribution of the weights, default is the identity matrix.
+            :type  V_0: :obj:`float` 
+        """
+        #Setting a gaussian prior of N(0,1) in case no prior is refered
+        if type(w_0) != np.ndarray and type(w_0) != list : 
+            w_0 = np.hstack([0]*(X.shape[1]+1))
+        if type(V_0) != np.ndarray and type(V_0) != list : 
+            V_0 = np.diag([1]*(X.shape[1]+1))**2
+
+        w_0 = w_0[:,None]
+        #Creating a new column for the bias term
+        phi = np.hstack((
+            np.ones((X.shape[0],1)),X
+        ))
+
+        assert true_sigma != None, "Error, please specify a true_sigma"
+        
+        sigma_y = true_sigma #True std of the generated data 
+
+        inv_V_0 = np.linalg.inv(V_0)
+                
+        V_n = sigma_y**2 * np.linalg.inv(sigma_y**2 * inv_V_0 + (phi.T@phi))
+        w_n = V_n @ inv_V_0 @ w_0 + 1/(sigma_y**2) * V_n @ phi.T @ y
+
+        self.w_0 = w_0
+        self.V_0 = V_0
+        self.w_n = w_n
+        self.V_n = V_n
+
+    def gaussian(self,X,mu,cov):
+        """
+            Returns the pdf of a Gaussian kernel
+            :param X: data
+            :type X: :obj:`numpy.array`
+
+            :param mu: mean of the gaussian
+            :type mu: :obj:`numpy.array`
+
+            :param cov: covariance matrix
+            :type cov: :obj:`numpy.array`
+        """
+        X_centered = X-mu
+        n = X.shape[1]
+        return np.diagonal((1 / ((2 * np.pi) ** (n / 2) * np.linalg.det(cov) ** 0.5))*np.exp(-0.5*np.dot(np.dot(X_centered, np.linalg.inv(cov)), X_centered.T))).reshape(-1,1)
+
+    def plot_weight_distributions(self,res = 100,xlim = (-8,8),ylim = (-8,8)):
+        """
+            Plots the weight distribution for the prior and the posterior probabilities.
+
+            :param res: resolution of the grid, default is 100.
+            :type res: :obj:`int`
+
+            :param xlim: a tuple of the min and max values of the grid along the x axis, default is (-8,8).
+            :type xlim: :obj:`tuple`
+
+            :param ylim: tuple of the min and max values of the grid along the y axis, default is (-8,8).
+            :type ylim: :obj:`tuple`
+        """
+
+        x = np.linspace(xlim[0], xlim[1], res)
+        y = np.linspace(ylim[0], ylim[1], res)
+        xx, yy = np.meshgrid(x,y)
+        xxyy = np.c_[xx.ravel(), yy.ravel()]
+
+        zz_0 = self.gaussian(xxyy, self.w_0.reshape(1,-1), self.V_0).reshape(1,-1)[0].round(15)
+        zz_n = self.gaussian(xxyy, self.w_n.reshape(1,-1), self.V_n).reshape(1,-1)[0].round(15)
+        zz_0[zz_0 == 0] = np.nan
+        zz_n[zz_n == 0] = np.nan
+
+        # reshape and plot image
+
+        img_0 = zz_0.reshape(res,res)
+        img_n = zz_n.reshape(res,res)
+        plt.contourf(xx,yy,img_0,alpha = 0.5,cmap = plt.cm.RdBu,label = 'prior')
+        plt.contourf(xx,yy,img_n,alpha = 0.5,cmap = plt.cm.RdBu,label = 'posterior')
+        plt.title('Posterior and prior distributions of the weights')
+
+    def plot_posterior_line(self,X,y,n_lines = 200,res = 100, xlim = (-1,10)):
+        """
+            Plots the model's distribution sampled from the posterior distribution of the weights.
+
+            :param X: data features.
+            :type  X: :obj:`numpy.array` 
+
+            :param y: data values.
+            :type  y: :obj:`numpy.array` 
+
+            :param n_lines: number of lines sampled from the posterior distribution, default is 200.
+            :type n_lines: :obj:`int`
+
+            :param res: resolution of the grid, default is 100.
+            :type res: :obj:`int`
+
+            :param xlim: a tuple of the min and max values of the grid along the x axis, default is (-1,10).
+            :type xlim: :obj:`tuple`
+        """
+
+        w_posterior = np.random.randn(n_lines, self.w_n.shape[0]) @ self.V_n + self.w_n.reshape(1,-1)
+        X_grid = np.linspace(xlim[0], xlim[1], res)
+        X_grid = np.vstack((
+            np.ones(X_grid.shape[0]),
+            X_grid
+        )).T
+
+        y_posterior = X_grid @ w_posterior.T
+        plt.fill_between(X_grid[:,1], y_posterior.min(axis = 1), y_posterior.max(axis = 1),alpha=0.5)
+        plt.scatter(X,y)
+        plt.title(f'{n_lines} lines sampled from the posterior distribution after including the data')
+        plt.show()
