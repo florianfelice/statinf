@@ -2,21 +2,18 @@
 from requests import get
 from bs4 import BeautifulSoup
 
-import sys, os
+import sys
+import os
 import getpass
 import json
 
 import argparse
 
 
-## Define 
+# Define
 library = 'statinf'
 desc = "A library for statistics and causal inference"
 requirements = ['pandas>=0.24.1', 'numpy>=1.16.3', 'scipy>=1.2.1', 'theano>=1.0.4', 'pycof>=1.0.19', 'matplotlib>=3.1.1']
-
-
-
-
 
 
 # Collect arguments
@@ -41,18 +38,17 @@ lib_path = path + library
 os.chdir(lib_path)
 
 
-
 # Define new version number is not provided in arguments
 if args.version is None:
     if args.test:
         url = f'https://test.pypi.org/project/{library}/'
     else:
         url = f'https://pypi.org/project/{library}/'
-    
+
     response = get(url)
 
     soup = BeautifulSoup(response.text, 'html.parser')
-    
+
     version_tag = soup.findAll("h1", {"class": "package-header__name"})
     version = str(version_tag[0]).split('\n')[1].split(' ')[-1]
     version_splitted = version.split('.')
@@ -85,7 +81,7 @@ os.system(f'python3 {lib_path}/setup_new.py sdist bdist_wheel')
 
 
 # Load pypi credentials
-with open('/etc/config.json') as config_file:
+with open('/etc/.pycof/config.json') as config_file:
     config = json.load(config_file)
 
 user = config.get('PYPI_USER')
@@ -103,10 +99,10 @@ else:
 
 # Commit to git and push
 if args.publish:
-    os.system(f"git add --all")
+    os.system("git add --all")
     os.system(f"git tag -a v{new_version} -m 'Version {new_version} on pypi. {args.message}'")
     os.system(f"git commit -a -m 'Upload version {new_version} to pypi. {args.message}'")
-    os.system(f"git push")
+    os.system("git push")
     git_update = 'and changes pushed to git'
 else:
     git_update = ""

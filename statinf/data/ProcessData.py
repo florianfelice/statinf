@@ -236,40 +236,49 @@ def OneHotEncoding(data, columns, drop=True, verbose=False):
 
         if drop:
             dataset.drop(columns=[column], inplace=True)
-    
+
     return(dataset)
 
 
 #######################################################################################################################
 
-# convert an array of values into a dataset matrix: used for LSTM data pre-processing
-def create_dataset(data, look_back=1):
-    """Function to convert a DataFrame to array format readable for keras LSTM.
+# Convert an array of values into a dataset matrix: used for LSTM data pre-processing
+def create_dataset(data, n_in=1, n_out=1, dropnan=True):
+    """Function to convert a DataFrame into into multivariate time series format readable by Keras LSTM.
 
     :param data: DataFrame on which to aply the transformation.
     :type data: :obj:`pandas.DataFrame`
-    :param look_back: Number of periods in the past to consider (defaults 1)., defaults to 1
-    :type look_back: :obj:`int`, optional
+    :param n_in: Input dimension also known as look back or size of the window, defaults to 1
+    :type n_in: :obj:`int`, optional
+    :param n_out: Output dimension, defaults to 1
+    :type n_out: :obj:`int`, optional
+    :param dropnan: Remove empty values in the series, defaults to True
+    :type dropnan: :obj:`bool`, optional
 
-    :example:
-        >>> from statinf.data import create_dataset
-        >>> create_dataset(df)
-
-    :return: * Features X converted for keras LSTM.
-        * Dependent variable Y converted for keras LSTM.
-    :rtype: * :obj:`numpy.array`
-        * :obj:`numpy.array`
+    :return: Features converted for Keras LSTM.
+    :rtype: :obj:`pandas.DataFrame`
     """
-
-    dataset = data.copy()
-
-    dataX, dataY = [], []
-    for i in range(len(dataset) - look_back - 1):
-        a = dataset[i:(i + look_back), 0]
-        dataX.append(a)
-        dataY.append(dataset[i + look_back, 0])
-    return np.array(dataX), np.array(dataY)
-
+    n_vars = 1 if type(data) is list else data.shape[1]
+    df = pd.DataFrame(data)
+    cols, names = list(), list()
+    # input sequence (t-n, ... t-1)
+    for i in range(n_in, 0, -1):
+        cols.append(df.shift(i))
+        names += [('var%d(t-%d)' % (j + 1, i)) for j in range(n_vars)]
+    # forecast sequence (t, t+1, ... t+n)
+    for i in range(0, n_out):
+        cols.append(df.shift(-i))
+        if i == 0:
+            names += [('var%d(t)' % (j + 1)) for j in range(n_vars)]
+        else:
+            names += [('var%d(t+%d)' % (j + 1, i)) for j in range(n_vars)]
+    # put it all together
+    agg = pd.concat(cols, axis=1)
+    agg.columns = names
+    # drop rows with NaN values
+    if dropnan:
+        agg.dropna(inplace=True)
+    return agg
 
 #######################################################################################################################
 
@@ -401,7 +410,7 @@ class Scaler:
             df[c + col_suffix] = (df[c] - _min) / (_max - _min)
         return df
 
-    def unscaleMinMax(self, data=None, columns=None):
+    def unscaleMinMax(self, data=None, columns=None, columns_mapping={}):
         """Unscale from min-max.
         Retreives data from the same range as the original features.
 
@@ -409,6 +418,8 @@ class Scaler:
         :type data: :obj:`pandas.DataFrame`, optional
         :param columns: Columns to be unscaled, defaults to None, takes the list provided in :py:meth:`__init__`.
         :type columns: :obj:`list`, optional
+        :param columns_mapping: Mapping between eventual renamed columns and original scaled column.
+        :type columns_mapping: :obj:`dict`, optional
 
         :formula: .. math:: x_{\\text{unscaled}} = x_{\\text{scaled}} \\cdot \\left(\\max(x) - \\min(x) \\right) + \\min(x)
 
@@ -420,6 +431,8 @@ class Scaler:
         unscale_suffix = '_unscaled' if self._minmax_suffix != '' else ''
 
         for c in cols:
+            # Apply eventual column name mapping
+            _c = c if columns_mapping.get(c) is None else columns_mapping.get(c)
             # Retreive min and max
             _min = self.scalers[c]['min']
             _max = self.scalers[c]['max']
@@ -469,13 +482,15 @@ class Scaler:
             df[c + col_suffix] = (df[c] - _mean) / _std
         return df
 
-    def unscaleNormalize(self, data=None, columns=None):
+    def unscaleNormalize(self, data=None, columns=None, columns_mapping={}):
         """Denormalize data to retreive the same range as the original data set.
 
         :param data: Data set to unscale, defaults to None, takes data provided in :py:meth:`__init__`.
         :type data: :obj:`pandas.DataFrame`, optional
         :param columns: Columns to be unscaled, defaults to None, takes the list provided in :py:meth:`__init__`.
         :type columns: :obj:`list`, optional
+        :param columns_mapping: Mapping between eventual renamed columns and original scaled column.
+        :type columns_mapping: :obj:`dict`, optional
 
         :formula: .. math:: x_{\\text{unscaled}} = x_{\\text{scaled}} \\cdot \\sqrt{\\mathbb{V}(x)} + \\bar{x}
 
@@ -487,9 +502,11 @@ class Scaler:
         unscale_suffix = '_unscaled' if self._standard_suffix != '' else ''
 
         for c in cols:
+            # Apply eventual column name mapping
+            _c = c if columns_mapping.get(c) is None else columns_mapping.get(c)
             # Retreive min and max
-            _mean = self.scalers[c]['mean'] if self.scalers[c]['center'] else 0.
-            _std = self.scalers[c]['std'] if self.scalers[c]['reduce'] else 1.
+            _mean = self.scalers[_c]['mean'] if self.scalers[_c]['center'] else 0.
+            _std = self.scalers[_c]['std'] if self.scalers[_c]['reduce'] else 1.
 
             df[c + unscale_suffix] = (df[c + self._standard_suffix] * _std) + _mean
 
