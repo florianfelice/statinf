@@ -280,6 +280,62 @@ def create_dataset(data, n_in=1, n_out=1, dropnan=True):
         agg.dropna(inplace=True)
     return agg
 
+
+def split_sequences(data, look_back=1):
+    """Split a multivariate time series from :py:meth:`statinf.data.ProcessData.multivariate_time_series` into a Keras' friendly format for LSTM.
+
+    :param data: Data in the format of sequences to transform.
+    :type data: :obj:`numpy.ndarray`
+    :param look_back: Size of the trailing window, number of time steps to consider, defaults to 1.
+    :type look_back: :obj:`int`
+
+    :exemple:
+
+        >>> from statinf.data import multivariate_time_series, split_sequences
+        >>> train_to_split = multivariate_time_series(train)
+        >>> X, y = split_sequences(train_to_split, look_back=7)
+
+    :return: * :obj:`x`: Input data converted for Keras LSTM.
+        * :obj:`y`: Target series converted for Keras LSTM.
+    :rtype: * :obj:`numpy.ndarray`
+        * :obj:`numpy.ndarray`
+    """
+    X, y = list(), list()
+    for i in range(len(data)):
+        # find the end of this pattern
+        end_ix = i + look_back
+        # check if we are beyond the dataset
+        if end_ix > len(data) - 1:
+            break
+        # gather input and output parts of the pattern
+        seq_x, seq_y = data[i:end_ix, :], data[end_ix, :]
+        X.append(seq_x)
+        y.append(seq_y)
+    return np.array(X), np.array(y)
+
+
+def multivariate_time_series(data):
+    """Convert a dataframe into numpy array multivariate time series.
+
+    :param data: Input data to transform.
+    :type data: :obj:`pandas.DataFrame`
+
+    :exemple:
+
+        >>> from statinf.data import multivariate_time_series, split_sequences
+        >>> train_to_split = multivariate_time_series(train)
+        >>> X, y = split_sequences(train_to_split, look_back=7)
+
+    :return: Transformed multivariate time series data.
+    :rtype: :obj:`numpy.ndarray`
+    """
+    to_stack = ()
+    for _c in data.columns:
+        series = data[_c].to_numpy()
+        to_stack += (series.reshape((len(series), 1)), )
+    return np.hstack(to_stack)
+
+
 #######################################################################################################################
 
 # Scale dataset
@@ -384,22 +440,28 @@ class Scaler:
             cols = columns
         return cols
 
-    def MinMax(self, data=None, columns=None, col_suffix=''):
+    def MinMax(self, data=None, columns=None, feature_range=(0, 1), col_suffix=''):
         """Min-max scaler. Data we range between 0 and 1.
 
-        :param data: Data set to scale, defaults to None, takes data provided in :py:meth:`__init__`.
+        :param data: Data set to scale, defaults to None, takes data provided in :py:meth:`__init__`, defaults to None.
         :type data: :obj:`pandas.DataFrame`, optional
-        :param columns: Columns to be scaled, defaults to None, takes the list provided in :py:meth:`__init__`.
+        :param columns: Columns to be scaled, defaults to None, takes the list provided in :py:meth:`__init__`, defaults to None.
         :type columns: :obj:`list`, optional
+        :param feature_range: Expected value range of the scaled data, defaults to (0, 1).
+        :type feature_range: :obj:`tuple`, optional
         :param col_suffix: Suffix to add to colum names, defaults to '', overrides the existing columns.
         :type col_suffix: :obj:`str`, optional
 
-        :formula: .. math:: x_{\\text{scaled}} = \\dfrac{x - \\min(x)}{\\max(x) - \\min(x)}
+        :formula: .. math:: x_{\\text{scaled}} = \\dfrac{x - \\min(x)}{\\max(x) - \\min(x)} \\cdot (f\\_max - f\\_min) + f\\_min
+
+            where :math:`(f\\_min, f\\_max)` defaults to :math:`(0, 1)` and corresponds to the expected data range of the scaled data from argument :obj:`feature_range`.
 
         :return: Data set with scaled features.
         :rtype: :obj:`pandas.DataFrame`
         """
         self._minmax_suffix = col_suffix
+        self._minmax_feature_range = feature_range
+        f_min, f_max = self._minmax_feature_range
         cols = self._col_to_list(columns)
         df = self.data if data is None else data.copy()
 
@@ -407,7 +469,8 @@ class Scaler:
             # Retreive min and max
             _min = self.scalers[c]['min']
             _max = self.scalers[c]['max']
-            df[c + col_suffix] = (df[c] - _min) / (_max - _min)
+            tmp = (df[c] - _min) / (_max - _min)
+            df[c + col_suffix] = tmp * (f_max - f_min) + f_min
         return df
 
     def unscaleMinMax(self, data=None, columns=None, columns_mapping={}):
@@ -429,14 +492,16 @@ class Scaler:
         cols = self._col_to_list(columns)
         df = self.data if data is None else data.copy()
         unscale_suffix = '_unscaled' if self._minmax_suffix != '' else ''
+        f_min, f_max = self._minmax_feature_range
 
         for c in cols:
             # Apply eventual column name mapping
             _c = c if columns_mapping.get(c) is None else columns_mapping.get(c)
             # Retreive min and max
-            _min = self.scalers[c]['min']
-            _max = self.scalers[c]['max']
-            df[c + unscale_suffix] = (df[c + self._minmax_suffix] * (_max - _min)) + _min
+            _min = self.scalers[_c]['min']
+            _max = self.scalers[_c]['max']
+            tmp = (df[c + self._minmax_suffix] - f_min) / (f_max - f_min)
+            df[c + unscale_suffix] = (tmp * (_max - _min)) + _min
         return df
 
     def Normalize(self, center=True, reduce=True, data=None, columns=None, col_suffix=''):
