@@ -23,7 +23,7 @@ def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', bi
     :param seed: Random seed, defaults to None.
     :type seed: :obj:`int`, optional
 
-    :param \*\*kwargs: Arguments to be passed in the distribution function. Can be:
+    :param \\*\\    *kwargs: Arguments to be passed in the distribution function. Can be:
 
         * `normal`: :obj:`loc` = :math:`\\mu` and :obj:`scale` = :math:`\\sigma^{2}`
         * `uniform`: :obj:`low` and :obj:`high`
@@ -56,13 +56,13 @@ def generate_dataset(coeffs, n, std_dev, intercept=0., distribution='normal', bi
 
     if binary:
         y = [1 if y_i > 0 else 0 for y_i in y]
-    
+
     df = pd.DataFrame(X.T)
     # Assign column names
     for col in df.columns:
         df.rename(columns={col: 'X' + str(col)}, inplace=True)
-    
+
     # Append Y
     df.loc[:, 'Y'] = y
-    #
+
     return df
