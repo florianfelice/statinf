@@ -10,7 +10,7 @@ STATINF
     :target: https://github.com/florianfelice/statinf
 
 This library aims at re-implementing standard statistical tools (such as OLS, logistic regression, Neural Network) and is built on top of `numpy`_
-for handling data and `theano`_ for differential computing.
+for handling data and `jax`_ for differential computing.
 The objective is to implement new methodologies from research projects on these models.
 The library also provides a data generator for linear and binary data.
 
@@ -37,7 +37,7 @@ STATINF tries to use the least number of dependencies possible:
 * `pandas <https://pandas.pydata.org/>`_: used to convert data frames into arrays.
 * `numpy`_ : main library for data handling and matrix operations.
 * `scipy <https://www.scipy.org/>`_: probability density functions.
-* `theano`_: tensor operations and back-propagation for Deep Learning models.
+* `jax`_: matrix operations and back-propagation for Deep Learning models.
 * `matplotlib <https://matplotlib.org/>`_: plots of training performances.
 * `pycof <https://www.florianfelice.com/pycof>`_: basic information printing.
 
@@ -116,4 +116,4 @@ Release and FAQ
 
 
 .. _numpy: https://numpy.org/
-.. _theano: http://deeplearning.net/software/theano/
+.. _jax: https://jax.readthedocs.io

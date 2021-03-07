@@ -8,6 +8,54 @@ We show most important releases that included new features.
 Library versions in between are used to fix bugs and implement improvement suggested by users' feedback.
 
 
+----
+
+
+*********************************************************************************************
+1.1.0 - March 7, 2021 - New backend dependency for :py:meth:`statinf.ml.neuralnetwork` module
+*********************************************************************************************
+
+Jax is now the new dependency for Statinf Deep Learning module.
+The module supports the same functionalities but the backend has moved from `theano`_ to `jax`_.
+The library offers auto-gradient computations that better scale with GPUs for high performance.
+
+The main changes are:
+
+* :py:meth:`statinf.ml.optimizers.SGD` offer the argument `alpha` as the momentum parameter and replaces the function :py:meth:`statinf.ml.optimizers.MomentumSGD`.
+* :py:meth:`statinf.ml.neuralnetwork.MLP.fit` replaces the previous :py:meth:`train` function and offers the same functionalities.
+* The value for the parameters of the optimizer can now be passed through the :py:meth:`statinf.ml.neuralnetwork.MLP.fit` function.
+
+More functionalities will soon be available.
+
+^^^^^^^^^^^^^^
+How to use it?
+^^^^^^^^^^^^^^
+
+
+.. code::
+
+    from statinf.ml import MLP, Layer
+
+    # Initialize the network and its architecture
+    nn = MLP(loss='mse')
+    nn.add(Layer(4, 1, activation='linear'))
+
+    # Train the neural network
+    nn.fit(data=data, X=X, Y=Y, epochs=1, learning_rate=0.001)
+
+
+^^^^^^^^^^^^^^^^^^
+How to install it?
+^^^^^^^^^^^^^^^^^^
+
+.. code::
+
+    pip3 install statinf==1.1.0
+
+
+See more details: :py:meth:`statinf.ml.neuralnetwork.MLP`.
+
+
 
 ----
 
@@ -69,7 +117,7 @@ How to install it?
     pip3 install statinf==1.0.28
 
 
-See more details: :py:meth:`statinf.stats.timeseries.adf_test` and :py:meth:`statinf.stats.timeseries.coint_test`
+See more details: :py:meth:`statinf.stats.timeseries.adf_test` and :py:meth:`statinf.stats.timeseries.coint_test`.
 
 
 
@@ -122,7 +170,7 @@ How to install it?
     pip3 install statinf==1.0.27
 
 
-See more details: :py:meth:`statinf.data.Scaler`
+See more details: :py:meth:`statinf.data.Scaler`.
 
 
 ----
@@ -194,7 +242,7 @@ How to install it?
     pip3 install statinf==1.0.23
 
 
-See more details: :py:meth:`statinf.regressions.LinearModels.GLM` and :py:meth:`statinf.regressions.LinearModels.OLS`
+See more details: :py:meth:`statinf.regressions.LinearModels.GLM` and :py:meth:`statinf.regressions.LinearModels.OLS`.
 
 
 ----
@@ -240,7 +288,7 @@ How to install it?
     pip3 install statinf==1.0.21
 
 
-See more details and examples: :py:meth:`statinf.stats.tests` and :py:meth:`statinf.stats.descriptive`
+See more details and examples: :py:meth:`statinf.stats.tests` and :py:meth:`statinf.stats.descriptive`.
 
 
 ----
@@ -324,7 +372,7 @@ How to install it?
     pip3 install statinf==1.0.16
 
 
-See more details: :py:meth:`statinf.ml.performance.BinaryPerformance`
+See more details: :py:meth:`statinf.ml.performance.BinaryPerformance`.
 
 
 ----
@@ -366,7 +414,7 @@ How to install it?
     pip3 install statinf==1.0.12
 
 
-See more details: :py:meth:`statinf.ml.optimizers`
+See more details: :py:meth:`statinf.ml.optimizers`.
 
 
 
@@ -409,7 +457,8 @@ How to install it?
     pip3 install statinf==1.0.7
 
 
-See more details: :py:meth:`statinf.ml.neuralnetwork.MLP`
+See more details: :py:meth:`statinf.ml.neuralnetwork.MLP`.
+
 More examples: `Getting Stated - Deep Learning <../deeplearning/example.html>`_.
 
 
@@ -418,4 +467,5 @@ More examples: `Getting Stated - Deep Learning <../deeplearning/example.html>`_.
 .. _issue: https://github.com/florianfelice/PYCOF/issues
 
 .. _theano: http://deeplearning.net/software/theano/
+.. _jax: https://jax.readthedocs.io
 .. _numpy: https://numpy.org/

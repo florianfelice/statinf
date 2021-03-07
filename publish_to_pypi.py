@@ -13,7 +13,7 @@ import argparse
 # Define
 library = 'statinf'
 desc = "A library for statistics and causal inference"
-requirements = ['pandas>=0.24.1', 'numpy>=1.16.3', 'scipy>=1.2.1', 'theano>=1.0.4', 'pycof>=1.0.19', 'matplotlib>=3.1.1']
+requirements = ['pandas>=0.24.1', 'numpy>=1.16.3', 'scipy>=1.2.1', 'jax>=0.2.10', 'jaxlib>=0.1.61', 'pycof>=1.0.19', 'matplotlib>=3.1.1']
 
 
 # Collect arguments

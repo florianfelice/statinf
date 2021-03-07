@@ -52,7 +52,7 @@ class GLM:
         self.hessian_hist   = []
 
         # Initialize parameters
-        self.beta = init_params(rows=self.p, cols=1, method=initializer, tensor=False)
+        self.beta = init_params(rows=self.p, cols=1, method=initializer)
 
     def _get_X(self, new_data=None):
         """Function to process data (and append unit variable if fit_intercept)
@@ -291,17 +291,21 @@ class GLM:
         :rtype: :obj:`pandas.DataFrame` or :obj:`str`
         """
         # Fit model if not already done
-        if self.log_likelihood == []:
+        if self.log_likelihood_hist == []:
             self.fit()
 
         # Initialize
         betas = self.beta
+        print(betas)
         X = self._get_X()
 
         t_values = betas / self._std_errors()
 
         p_values = [round(2 * (1 - scp.t.cdf(np.abs(i[0]), (len(X) - 1))), 5) for i in t_values]
         z = scp.norm.ppf(0.975)
+
+        betas = [b[0] for b in self.beta]
+        t_values = [t[0] for t in t_values]
 
         summary_df = pd.DataFrame()
         summary_df["Variables"] = ['(Intercept)'] + self.X_col if self.fit_intercept else self.X_col
@@ -310,6 +314,7 @@ class GLM:
         summary_df["t-values"] = t_values
         summary_df["Probabilities"] = p_values
         summary_df["Significance"] = summary_df["Probabilities"].map(lambda x: get_significance(x))
+        print(summary_df)
         summary_df["CI_lo"] = summary_df["Coefficients"] - z * summary_df["Standard Errors"]
         summary_df["CI_hi"] = summary_df["Coefficients"] + z * summary_df["Standard Errors"]
 
@@ -365,7 +370,7 @@ class GLM:
         :rtype: :obj:`numpy.ndarray`
         """
         # Fit model if not already done
-        if self.log_likelihood == []:
+        if self.log_likelihood_hist == []:
             self.fit()
 
         # Tranform data
@@ -400,7 +405,7 @@ class GLM:
         assert self.family == 'binomial', 'APE module only available for Logit model.'
 
         # Fit model if not already done
-        if self.log_likelihood == []:
+        if self.log_likelihood_hist == []:
             self.fit()
 
         # Get data

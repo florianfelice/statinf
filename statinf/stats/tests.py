@@ -109,7 +109,7 @@ def ttest(x, mu=0, alpha=0.05, is_bernoulli=False, two_sided=True, return_tuple=
     if return_tuple:
         return t, cv, p
     else:
-        return _summ
+        print(_summ)
 
 
 # 2 samples Student test
@@ -238,7 +238,7 @@ def ttest_2samp(x1, x2, alpha=0.05, paired=False, is_bernoulli=False, two_sided=
     if return_tuple:
         return t, cv, p
     else:
-        return _summ
+        print(_summ)
 
 
 # Kolmogorov-Smirnov test
@@ -348,4 +348,4 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
     if return_tuple:
         return k, cv, p
     else:
-        return _summ
+        print(_summ)

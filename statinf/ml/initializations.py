@@ -1,10 +1,13 @@
+import jax.numpy as jnp
+from jax import random as jrdm
 import numpy as np
-import theano
+
+key, _ = jrdm.split(jrdm.PRNGKey(0))
 
 
-def init_params(rows, cols, method='xavier', mean=0., std=1., tensor=True, seed=None):
+def init_params(rows, cols, method='xavier', mean=0., std=1., key=key):
     """Initialize the weight and bias matrices based on probabilistic distribution.
-    
+
     :param rows: Size of the input, number of rows to be generated.
     :type rows: int
     :param cols: Size of the output, number of columns to be generated.
@@ -19,9 +22,9 @@ def init_params(rows, cols, method='xavier', mean=0., std=1., tensor=True, seed=
     :type tensor: bool, optional
     :param seed: Seed to be set for randomness, defaults to None.
     :type seed: int, optional
-    
+
     :raises ValueError: `method` needs to be 'ones', 'zeros', 'uniform', 'xavier' or 'normal', see below for details.
-    
+
     :method: * **Zeros**: :math:`W_j = \\vec{0}`
         * **Ones**: :math:`W_j = \\vec{1}`
         * **Uniform**: :math:`W_j \\sim \\mathcal{U} _{\\left[0, 1 \\right)}`
@@ -34,27 +37,21 @@ def init_params(rows, cols, method='xavier', mean=0., std=1., tensor=True, seed=
     :rtype: numpy.array
     """
 
-    # Set random state
-    rdm = np.random.RandomState(seed) if seed is not None else np.random
-
     # Get the weights
-    if method.upper() == 'ONES':
+    if method.lower() == 'ones':
+        # W = jnp.ones((rows, cols))
         W = np.ones((rows, cols))
-    if method.upper() == 'ZEROS':
-        W = np.zeros((rows, cols))
-    elif method.upper() == 'UNIFORM':
-        W = rdm.rand(rows, cols)
-    elif method.upper() == 'XAVIER':
-        W = rdm.uniform(low = -np.sqrt(6. / (rows + cols)),
-                    high = np.sqrt(6. / (rows + cols)),
-                    size = (rows, cols))
-    elif method.upper() == 'NORMAL':
-        W = rdm.normal(mean, std, rows * cols).reshape((rows, cols))
+    if method.lower() == 'zeros':
+        W = jnp.zeros((rows, cols))
+    elif method.lower() == 'uniform':
+        W = jrdm.uniform(key, (rows, cols))
+    elif method.lower() == 'xavier':
+        W = jrdm.uniform(key, shape=(rows, cols),
+                         minval=-jnp.sqrt(6. / (rows + cols)),
+                         maxval=jnp.sqrt(6. / (rows + cols)))
+    elif method.lower() == 'normal':
+        W = jrdm.normal(key, (rows, cols))
     else:
-        raise ValueError('Weight initialization method not valid.')
+        raise ValueError(f"Weight initialization method not valid. Muse be in 'ones', 'zeros', 'uniform', xavier', 'normal'. Got '{method}'.")
 
-    if tensor:
-        return np.asarray(W, dtype=theano.config.floatX)
-    else:
-        return W
-
+    return W
