@@ -294,7 +294,7 @@ class OLS:
         ar2 = round(self.adjusted_r_squared(), 5)
         _n_ = self.n
         _p_ = self.p
-        #
+
         fis = round(self._fisher(), 3)
         llf = round(self._loglikelihood(), 3)
         aic = round(self._aic(), 3)
@@ -316,7 +316,7 @@ class OLS:
             summ += f"| Log-likelihood      =             {llf:15} | AIC               =                        {aic:10} {add_sp}|\n"
             summ += f"| Fisher value        =             {fis:15} |                                                       {add_sp}|\n"
             summ += summary(summary_df)
-            return(summ)
+            print(summ)
 
     def predict(self, new_data, conf_level=None):
         """Predicted :math:`\\hat{Y}` values for for a new dataset

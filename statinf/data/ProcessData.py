@@ -172,7 +172,7 @@ def OneHotEncoding(data, columns, drop=True, verbose=False):
     :type data: :obj:`pandas.DataFrame`
     :param columns: Column to be converted to dummy variables.
     :type columns: :obj:`list`
-    :param drop: Drop the column that needs to be converted to dummies, defaults to True.
+    :param drop: Drop the column for one attribute (first value that appears in the dataset). This helps avoid multicolinearity issues in subsequent models, defaults to True.
     :type drop: :obj:`bool`, optional
     :param verbose: Display progression, defaults to False.
     :type verbose: :obj:`bool`, optional
@@ -194,16 +194,27 @@ def OneHotEncoding(data, columns, drop=True, verbose=False):
         >>> new_df = OneHotEncoding(df, columns=["Gender", "Category"])
         >>> print(new_df)
         ... +----+---------------+------------+------------+-----+
-        ... | Id | Gender_Female | Category_A | Category_B | Age |
+        ... | Id | Gender_Female | Category_B | Category_C | Age |
         ... +----+---------------+------------+------------+-----+
-        ... |  1 |             0 |          1 |          0 |  23 |
-        ... |  2 |             1 |          0 |          1 |  21 |
-        ... |  3 |             1 |          1 |          0 |  31 |
-        ... |  4 |             0 |          0 |          0 |  22 |
-        ... |  5 |             1 |          1 |          0 |  26 |
+        ... |  1 |             0 |          0 |          0 |  23 |
+        ... |  2 |             1 |          1 |          0 |  21 |
+        ... |  3 |             1 |          0 |          0 |  31 |
+        ... |  4 |             0 |          0 |          1 |  22 |
+        ... |  5 |             1 |          0 |          0 |  26 |
         ... +----+---------------+------------+------------+-----+
+        >>> # Listing the newly created columns
+        >>> print(new_df.meta._ohe)
+        ... {'Gender': ['Gender_Female'],
+        ...  'Category': ['Category_A', 'Category_B']}
+        >>> # Get the aggregated list of encoded columns
+        >>> print(new_df.meta._ohe_all_columns)
+        ... ['Gender_Female', 'Category_B', 'Category_C']
 
     :return: Transformed data with One Hot Encoded variables.
+            New attributes are added to the data frame:
+
+            * :obj:`df.meta._ohe`: contains the encoded columns and the created columns.
+            * :obj:`df.meta._ohe_all_columns`: aggregates the newly created columns in one list. This list can directly be passed or appended to the input columns argument of subsequent models.
     :rtype: :obj:`pandas.DataFrame`
     """
 
@@ -216,6 +227,7 @@ def OneHotEncoding(data, columns, drop=True, verbose=False):
         dataset.meta = SimpleNamespace()
         dataset.meta._ohe_exists = True
         dataset.meta._ohe = {}
+        dataset.meta._ohe_all_columns = []
 
     cols = [columns] if type(columns) == str else columns
 
@@ -223,8 +235,11 @@ def OneHotEncoding(data, columns, drop=True, verbose=False):
     for column in cols:
         # Get all values from the column
         all_values = dataset[column].unique()
+        all_values = all_values[1:] if drop else all_values
+        new_cols = [f'{column}_{val}' for val in all_values]
         # Add column metadata
-        dataset.meta._ohe.update({column: [f'{column}_{val}' for val in all_values]})
+        dataset.meta._ohe.update({column: new_cols})
+        dataset.meta._ohe_all_columns += new_cols
 
         # Encode values
         for val in all_values:
@@ -234,8 +249,8 @@ def OneHotEncoding(data, columns, drop=True, verbose=False):
             dataset.loc[:, colname] = 0
             dataset.loc[dataset[column] == val, colname] = 1
 
-        if drop:
-            dataset.drop(columns=[column], inplace=True)
+        # Drop the original categorical column
+        dataset.drop(columns=[column], inplace=True)
 
     return(dataset)
 

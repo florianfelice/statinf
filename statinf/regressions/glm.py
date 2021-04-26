@@ -296,7 +296,6 @@ class GLM:
 
         # Initialize
         betas = self.beta
-        print(betas)
         X = self._get_X()
 
         t_values = betas / self._std_errors()
@@ -314,7 +313,6 @@ class GLM:
         summary_df["t-values"] = t_values
         summary_df["Probabilities"] = p_values
         summary_df["Significance"] = summary_df["Probabilities"].map(lambda x: get_significance(x))
-        print(summary_df)
         summary_df["CI_lo"] = summary_df["Coefficients"] - z * summary_df["Standard Errors"]
         summary_df["CI_hi"] = summary_df["Coefficients"] + z * summary_df["Standard Errors"]
 
@@ -354,7 +352,7 @@ class GLM:
             summ += f"| n                      =              {_n_:10} | p                          =                {_p_:10} {add_sp}|\n"
             summ += f"| Iterations             =              {_it:10} | Convergence                =                 {_cv:5} {add_sp}|\n"
             summ += summary(summary_df)
-            return(summ)
+            print(summ)
 
     def predict(self, new_data, return_proba=False):
         """Predicted :math:`\\hat{Y}` values for for a new dataset
