@@ -28,8 +28,6 @@ You can get STATINF from `PyPI <https://pypi.org/project/statinf/>`_ with:
 
    pip install statinf
 
-
-
 The library is supported on Windows, Linux and MacOS.
 
 STATINF tries to use the least number of dependencies possible:
@@ -39,7 +37,9 @@ STATINF tries to use the least number of dependencies possible:
 * `scipy <https://www.scipy.org/>`_: probability density functions.
 * `jax`_: matrix operations and back-propagation for Deep Learning models.
 * `matplotlib <https://matplotlib.org/>`_: plots of training performances.
-* `pycof <https://www.florianfelice.com/pycof>`_: basic information printing.
+* `pycof <https://www.florianfelice.com/pycof?orgn=statinf>`_: basic information printing.
+
+Once your dependencies are installed, you may need additional steps to enable GPUs (if eligible), see `FAQ <updates/faq.html?orgn=stating_idx#why-is-my-gpu-not-recognized>`_.
 
 
 Indices and tables
