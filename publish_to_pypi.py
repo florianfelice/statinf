@@ -73,6 +73,18 @@ with open(lib_path + '/setup_new.py', "w") as f:
     f.write(template)
 
 
+# Load the init template file
+with open(lib_path + f'/{library.lower()}/init_template.py') as f:
+    init_template = f.read()
+
+# Update init_template
+init_template = init_template.format(version=new_version)
+
+# And write the new init file
+with open(lib_path + f'/{library.lower()}/__init__.py', "w") as f:
+    f.write(init_template)
+
+
 # Delete files to load
 os.system(f'rm {lib_path}/dist/*')
 

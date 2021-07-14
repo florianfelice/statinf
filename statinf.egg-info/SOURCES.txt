@@ -2,6 +2,7 @@ README.md
 setup.py
 setup_new.py
 statinf/__init__.py
+statinf/init_template.py
 statinf/misc.py
 statinf.egg-info/PKG-INFO
 statinf.egg-info/SOURCES.txt

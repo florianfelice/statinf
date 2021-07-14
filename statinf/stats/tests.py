@@ -1,9 +1,10 @@
 import numpy as np
 import math
+import warnings
 from scipy import stats as scp
 
 from . import descriptive as desc
-from ..misc import test_summary
+from ..misc import test_summary, format_object
 
 
 # One sample Student test
@@ -347,5 +348,166 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
 
     if return_tuple:
         return k, cv, p
+    else:
+        print(_summ)
+
+
+# Wilcoxon test
+def wilcoxon(x, y=None, alpha=0.05, alternative='two-sided', mode='auto', zero_method='wilcox', return_tuple=False):
+    """Wilcoxon signed-rank test.
+
+    :param x: First sample to compare. If `y` is not provided, will correspond to the difference :math:`x - y`.
+    :type x: :obj:`numpy.array`
+    :param y: Second sample to compare, defaults to None.
+    :type y: :obj:`numpy.array`, optional
+    :param alpha: Confidence level, defaults to 0.05.
+    :type alpha: :obj:`float``, optional
+    :param alternative: Perform a one or two-sided test. Values can be `two-sided`, `greater`, `less`, defaults to 'two-sided'.
+    :type alternative: :obj:`str`, optional
+    :param mode: Method to calculate the p-value. Computes the exact distribution is sample size is less than 25, otherwise uses normal approximation. Values can be `auto`, `approx` or `exact`, defaults to 'auto'.
+    :type mode: :obj:`str`, optional
+    :param zero_method: Method to handle the zero differences., defaults to 'wilcox'
+    :type zero_method: :obj:`str`, optional
+    :param return_tuple: Return a tuple with t statistic, critical value and p-value, defaults to False.
+    :type return_tuple: :obj:`bool`, optional
+
+    :example:
+
+    >>> from statinf import stats
+    >>> import numpy as np
+    >>> x = np.random.poisson(2, size=100)
+    >>> y = x_dist + np.random.normal(loc=0, scale=1, size=100)
+    >>> stats.wilcoxon(x, y)
+    ... +------------------------------------------------------------+
+    ... |                       Wilcoxon test                        |
+    ... +------------+----------------+------------+---------+-------+
+    ... |     df     | Critical value | Stat value | p-value |   H0  |
+    ... +------------+----------------+------------+---------+-------+
+    ... |        100 |   1.9599639845 |  -1.316878 | 0.18788 | True  |
+    ... +------------+----------------+------------+---------+-------+
+    ...  * We cannot reject H0: x - y ~ symmetric distribution centered in 0
+    ...  * The T-value is: 2142.0
+
+    :reference: * Wilcoxon, F., Individual Comparisons by Ranking Methods, Biometrics Bulletin, Vol. 1, 1945, pp. 80-83.
+        * Cureton, E.E., The Normal Approximation to the Signed-Rank Sampling Distribution When Zero Differences are Present, Journal of the American Statistical Association, Vol. 62, 1967, pp. 1068-1069.
+
+    :return: Summary for the test or tuple statistic, critical value, p-value.
+    :rtype: :obj:`tuple`
+    """
+
+    # Code mostly inspired from: https://github.com/scipy/scipy/blob/v1.7.0/scipy/stats/morestats.py#L2984-L3233
+
+    # Define test degrees of freedom
+    if alternative == 'two-sided':
+        quant_order = 1 - (alpha / 2)
+        h0 = 'x - y ~ symmetric distribution centered in 0'
+        h1 = 'x - y is not a symmetric distribution centered in 0'
+    else:
+        quant_order = 1 - alpha
+        h0 = 'x - y ~ symmetric distribution centered in 0'
+        h1 = 'x - y is not a symmetric distribution centered in 0'
+
+    if y is None:
+        # If y is not provided, we consider x already corresponds to x - y
+        d = format_object(x, to_type='array', name='x')
+    else:
+        x = format_object(x, to_type='array', name='x')
+        y = format_object(y, to_type='array', name='y')
+        d = x - y
+
+    if mode == "auto":
+        if len(d) <= 25:
+            mode = "exact"
+        else:
+            mode = "approx"
+
+    n_zero = np.sum(d == 0)
+    if n_zero > 0:
+        mode = "approx"
+        warnings.warn("Found some ties, switching mode to 'approx.'")
+
+    if mode == "approx":
+        if zero_method in ["wilcox", "pratt"]:
+            if n_zero == len(d):
+                raise ValueError("zero_method 'wilcox' and 'pratt' do not "
+                                 "work if x - y is zero for all elements.")
+        if zero_method == "wilcox":
+            # Keep all non-zero differences
+            # d = compress(np.not_equal(d, 0), d)
+            d = np.array([_d for _d in d if _d != 0])
+
+    count = len(d)
+    if count < 10 and mode == "approx":
+        ValueError(f"Sample size is too small for normal approximation, got n={count}.")
+
+    r = scp.rankdata(abs(d))
+    r_plus = np.sum((d > 0) * r)
+    r_minus = np.sum((d < 0) * r)
+
+    if alternative == "two-sided":
+        T = min(r_plus, r_minus)
+    else:
+        T = r_plus
+
+    # Estimation with approximation (dim < 25)
+    if mode == "approx":
+        mn = count * (count + 1.) * 0.25
+        se = count * (count + 1.) * (2. * count + 1.)
+
+        if zero_method == "pratt":
+            r = r[d != 0]
+            # normal approximation needs to be adjusted, see Cureton (1967)
+            mn -= n_zero * (n_zero + 1.) * 0.25
+            se -= n_zero * (n_zero + 1.) * (2. * n_zero + 1.)
+
+        _, repnum = scp.find_repeats(r)
+        if repnum.size != 0:
+            # Correction for repeated elements.
+            se -= 0.5 * (repnum * (repnum * repnum - 1)).sum()
+
+        se = math.sqrt(se / 24)
+
+        # apply continuity correction if applicable
+        d = 0
+
+        # compute statistic and p-value using normal approximation
+        z = (T - mn - d) / se
+        if alternative == "two-sided":
+            p = 2. * scp.norm.sf(abs(z))
+        elif alternative == "greater":
+            # large T = r_plus indicates x is greater than y; i.e.
+            # accept alternative in that case and return small p-value (sf)
+            p = scp.norm.sf(z)
+        else:
+            p = scp.norm.cdf(z)
+    # Exact estimation
+    elif mode == "exact":
+        # Get frequencies cnt of the possible positive ranksums r_plus
+        cnt = scp._hypotests._get_wilcoxon_distr(count)
+        # Note: r_plus is int (ties not allowed), need int for slices below
+        r_plus = int(r_plus)
+        if alternative == "two-sided":
+            if r_plus == (len(cnt) - 1) // 2:
+                # r_plus is the center of the distribution.
+                p = 1.0
+            else:
+                p_less = np.sum(cnt[:r_plus + 1]) / 2**count
+                p_greater = np.sum(cnt[r_plus:]) / 2**count
+                p = 2 * min(p_greater, p_less)
+        elif alternative == "greater":
+            p = np.sum(cnt[r_plus:]) / 2**count
+        else:
+            p = np.sum(cnt[:r_plus + 1]) / 2**count
+
+    cv = scp.norm.ppf(quant_order)
+
+    _summ = test_summary(df=count, critical_value=cv, t_value=z,
+                         p_value=p, alpha=alpha,
+                         title='Wilcoxon test',
+                         h0=h0, h1=h1,
+                         extra=f' * The T-value is: {round(T, 5)}')
+
+    if return_tuple:
+        return z, cv, p
     else:
         print(_summ)
