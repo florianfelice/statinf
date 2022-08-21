@@ -1,7 +1,3 @@
-jax>=0.2.10
-jaxlib>=0.1.61
-matplotlib>=3.1.1
 numpy>=1.16.3
 pandas>=0.24.1
-pycof>=1.0.19
 scipy>=1.2.1

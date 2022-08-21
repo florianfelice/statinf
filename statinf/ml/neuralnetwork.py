@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from jax import random as jrdm
-from jax import jit, vmap, grad, value_and_grad, tree_multimap, lax
+from jax import jit, vmap, grad, value_and_grad, lax
 import numpy as np
 import random
 import matplotlib.pyplot as plt
