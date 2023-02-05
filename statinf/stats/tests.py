@@ -289,7 +289,7 @@ def kstest(x1, x2='normal', alpha=0.05, return_tuple=False, **kwargs):
 
     :reference: * DeGroot, M. H., & Schervish, M. J. (2012). Probability and statistics. Pearson Education.
         * Kolmogorov-Smirnov, A. N., Kolmogorov, A., & Kolmogorov, M. (1933). Sulla determinazione empírica di uma legge di distribuzione.
-        * Marsaglia, G., Tsang, W. W., & Wang, J. (2003). `Evaluating Kolmogorov’s distribution <https://www.jstatsoft.org/article/view/v008i18>`_. Journal of Statistical Software, 8(18), 1-4.
+        * Marsaglia, G., Tsang, W. W., & Wang, J. (2003). `Evaluating Kolmogorov's distribution <https://www.jstatsoft.org/article/view/v008i18>`_. Journal of Statistical Software, 8(18), 1-4.
 
     :return: Summary for the test or tuple statistic, critical value, p-value.
     :rtype: :obj:`str` or :obj:`tuple`

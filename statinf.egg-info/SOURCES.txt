@@ -1,3 +1,4 @@
+LICENSE
 README.md
 setup.py
 setup_new.py
@@ -12,6 +13,8 @@ statinf.egg-info/top_level.txt
 statinf/data/GenerateData.py
 statinf/data/ProcessData.py
 statinf/data/__init__.py
+statinf/distributions/__init__.py
+statinf/distributions/discrete.py
 statinf/ml/__init__.py
 statinf/ml/activations.py
 statinf/ml/generative.py

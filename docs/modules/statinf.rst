@@ -54,6 +54,13 @@ Indices and tables
 Modules available
 =================
 
+Distributions
+-------------
+
+.. toctree::
+
+    distributions/discrete
+
 Econometrics
 ------------
 

@@ -1,203 +1,206 @@
 Metadata-Version: 2.1
 Name: statinf
-Version: 1.0.1
+Version: 1.2.0
 Summary: A library for statistics and causal inference
-Home-page: https://github.com/florianfelice/statinf
+Home-page: https://www.florianfelice.com/statinf
 Author: Florian Felice
 Author-email: florian.felice@outlook.com
 License: UNKNOWN
-Description: # STATINF
-        
-        ## 1. Installation
-        [![Downloads](https://pepy.tech/badge/statinf)](https://pepy.tech/project/statinf)
-        [![PyPI version](https://badge.fury.io/py/statinf.svg)](https://pypi.org/project/statinf/)
-        
-        You can get statinf from [PyPI](https://pypi.org/project/statinf/) with:
-        
-        ```bash
-        pip install statinf
-        ```
-        
-        `statinf` is a library for statistics and causal inference.
-        It provides main the statistical models ranging from the traditional OLS to Neural Networks.
-        
-        The library is supported on Windows, Linux and MacOs.
-        
-        
-        
-        ## 2. Documentation
-        
-        You can find the full documentation at [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
-        
-        You can also find an [FAQ](https://www.florianfelice.com/statinf/updates/faq.html?orgn=github) and the [latest news](https://www.florianfelice.com/statinf/updates/release.html?orgn=github) of the library on the [documentation](https://www.florianfelice.com/statinf?orgn=github).
-        
-        
-        ## 3. Available modules
-        
-        Here is a non-exhaustive list of available modules on `statinf`:
-        
-        1. `MLP` implements MultiLayer Perceptron
-        (see [MLP](https://www.florianfelice.com/statinf/deeplearning/neuralnetwork.html?orgn=github) for more details and examples).
-        
-        1. `OLS` allows to use Ordinary Least Squares for linear regressions
-        (see [OLS](https://www.florianfelice.com/statinf/econometrics/ols.html?orgn=github) for more details and examples).
-        
-        1. `GLM` implements the Generalized Linear Models 
-        see [GLM](https://www.florianfelice.com/statinf/econometrics/glm.html?orgn=github) for more details and examples).
-        
-        1. `stats` allows to use [descriptive](https://www.florianfelice.com/statinf/stats/tests.html?orgn=github) and
-        [tests](https://www.florianfelice.com/statinf/stats/descriptive.html?orgn=github) statistics.
-        
-        1. `data` is a module to process data such as [data generation](https://www.florianfelice.com/statinf/data/generate.html#statinf.data.GenerateData.generate_dataset?orgn=github),
-        [One Hot Encoding](https://www.florianfelice.com/statinf/data/process.html#statinf.data.ProcessData.OneHotEncoding?orgn=github) and others
-        (see [data processing](https://www.florianfelice.com/statinf/data/process.html?orgn=github) or (see [data generation](https://www.florianfelice.com/statinf/data/generate.html?orgn=github) modules for more details).
-        
-        
-        You can find the below examples and many more on [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
-        Stay tuned with the future [releases](https://www.florianfelice.com/statinf/updates/release.html?orgn=github).
-        
-        
-        
-        ### 3.1. [OLS](https://www.florianfelice.com/statinf/econometrics/ols.html?orgn=github)
-        
-        `statinf` comes with the OLS regression implemented with the analytical formula:
-        
-        ![(X'X)^{-1}X'Y](https://latex.codecogs.com/svg.latex?\Large&space;x=(X'X)^{-1}X'Y)
-        
-        
-        
-        ```python
-        from statinf.regressions import OLS
-        from statinf.data import generate_dataset
-        
-        # Generate a synthetic dataset
-        data = generate_dataset(coeffs=[1.2556, -0.465, 1.665414, 2.5444, -7.56445], n=1000, std_dev=1.6)
-        
-        # We set the OLS formula
-        formula = "Y ~ X0 + X1 + X2 + X3 + X4 + X1*X2 + exp(X2)"
-        # We fit the OLS with the data, the formula and without intercept
-        ols = OLS(formula, df, fit_intercept=True)
-        
-        ols.summary()
-        ```
-        
-        The output will be:
-        
-        ```bash
-        ==================================================================================
-        |                                  OLS summary                                   |
-        ==================================================================================
-        | R²             =            0.98475 | R² Adj.      =                   0.98464 |
-        | n              =                999 | p            =                         7 |
-        | Fisher value   =          10676.727 |                                          |
-        ==================================================================================
-        | Variables         | Coefficients   | Std. Errors  | t-values   | Probabilities |
-        ==================================================================================
-        | X0                |         1.3015 |      0.03079 |     42.273 |     0.0   *** |
-        | X1                |       -0.48712 |      0.03123 |    -15.597 |     0.0   *** |
-        | X2                |        1.62079 |      0.04223 |     38.377 |     0.0   *** |
-        | X3                |        2.55237 |       0.0326 |     78.284 |     0.0   *** |
-        | X4                |       -7.54776 |      0.03247 |   -232.435 |     0.0   *** |
-        | X1*X2             |        0.03626 |      0.02866 |      1.265 |   0.206       |
-        | exp(X2)           |       -0.00929 |      0.01551 |     -0.599 |   0.549       |
-        ==================================================================================
-        | Significance codes: 0. < *** < 0.001 < ** < 0.01 < * < 0.05 < . < 0.1 < '' < 1 |
-        ```
-        
-        
-        
-        ### 3.2. [GLM](https://www.florianfelice.com/statinf/econometrics/glm.html?orgn=github)
-        
-        The logistic regression can be used for binary classification where ![Y](https://latex.codecogs.com/svg.latex?\Large&space;Y) follows a Bernoulli distribution. With ![X](https://latex.codecogs.com/svg.latex?\Large&space;X) being the matrix of regressors, we have:
-        
-        ![p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}}](https://latex.codecogs.com/svg.latex?\Large&space;p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}})
-        
-        
-        We then implement the regression with:
-        
-        ```python
-        from statinf.regressions import GLM
-        from statinf.data import generate_dataset
-        
-        # Generate a synthetic dataset
-        data = generate_dataset(coeffs=[1.2556, -6.465, 1.665414, -1.5444], n=2500, std_dev=10.5, binary=True)
-        
-        # We split data into train/test/application
-        train = data.iloc[0:1000]
-        test = data.iloc[1001:2000]
-        
-        
-        # We set the linear formula for Xb
-        formula = "Y ~ X0 + X1 + X2 + X3"
-        logit = GLM(formula, train, test_set=test)
-        
-        # Fit the model
-        logit.fit(plot=False, maxit=10)
-        
-        logit.get_weights()
-        ```
-        
-        The ouput will be:
-        
-        ```bash
-        ==================================================================================
-        |                                  Logit summary                                 |
-        ==================================================================================
-        | McFadden R²     =          0.67128 | McFadden R² Adj.    =              0.6424 |
-        | Log-Likelihood  =          -227.62 | Null Log-Likelihood =             -692.45 |
-        | LR test p-value =              0.0 | Covariance          =           nonrobust |
-        | n               =              999 | p                   =                  5  |
-        | Iterations      =                8 | Convergence         =                True |
-        ==================================================================================
-        | Variables         | Coefficients   | Std. Errors  | t-values   | Probabilities |
-        ==================================================================================
-        | X0                |       -1.13024 |      0.10888 |    -10.381 |     0.0   *** |
-        | X1                |        0.02963 |      0.07992 |      0.371 |   0.711       |
-        | X2                |       -1.40968 |       0.1261 |    -11.179 |     0.0   *** |
-        | X3                |         0.5253 |      0.08966 |      5.859 |     0.0   *** |
-        ==================================================================================
-        | Significance codes: 0. < *** < 0.001 < ** < 0.01 < * < 0.05 < . < 0.1 < '' < 1 |
-        ==================================================================================
-        ```
-        
-        
-        ### 3.3. [Multi Layer Perceptron](https://www.florianfelice.com/statinf/deeplearning/neuralnetwork.html?orgn=github)
-        
-        You can train a Neural Network using the `MLP` class.
-        The below example shows how to train an MLP with 1 single linear layer. It is equivalent to implement an OLS with Gradient Descent.
-        
-        ```python
-        from statinf.data import generate_dataset
-        from statinf.ml import MLP, Layer
-        
-        # Generate the synthetic dataset
-        data = generate_dataset(coeffs=[1.2556, -6.465, 1.665414, 1.5444], n=1000, std_dev=1.6)
-        
-        Y = ['Y']
-        X = [c for c in data.columns if c not in Y]
-        
-        # Initialize the network and its architecture
-        nn = MLP()
-        nn.add(Layer(4, 1, activation='linear'))
-        
-        # Train the neural network
-        nn.train(data=data, X=X, Y=Y, epochs=1, learning_rate=0.001)
-        
-        # Extract the network's weights
-        print(nn.get_weights())
-        ```
-        
-        Output:
-        
-        ```python
-        {'weights 0': array([[ 1.32005564],
-               [-6.38121934],
-               [ 1.64515704],
-               [ 1.48571785]]), 'bias 0': array([0.81190412])}
-        ```
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.6
 Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# STATINF
+
+## 1. Installation
+[![Downloads](https://pepy.tech/badge/statinf)](https://pepy.tech/project/statinf)
+[![PyPI version](https://badge.fury.io/py/statinf.svg)](https://pypi.org/project/statinf/)
+
+You can get statinf from [PyPI](https://pypi.org/project/statinf/) with:
+
+```bash
+pip install statinf
+```
+
+`statinf` is a library for statistics and causal inference.
+It provides main the statistical models ranging from the traditional OLS to Neural Networks.
+
+The library is supported on Windows, Linux and MacOs.
+
+
+
+## 2. Documentation
+
+You can find the full documentation at [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
+
+You can also find an [FAQ](https://www.florianfelice.com/statinf/updates/faq.html?orgn=github) and the [latest news](https://www.florianfelice.com/statinf/updates/release.html?orgn=github) of the library on the [documentation](https://www.florianfelice.com/statinf?orgn=github).
+
+
+## 3. Available modules
+
+Here is a non-exhaustive list of available modules on `statinf`:
+
+1. `MLP` implements MultiLayer Perceptron
+(see [MLP](https://www.florianfelice.com/statinf/deeplearning/neuralnetwork.html?orgn=github) for more details and examples).
+
+1. `OLS` allows to use Ordinary Least Squares for linear regressions
+(see [OLS](https://www.florianfelice.com/statinf/econometrics/ols.html?orgn=github) for more details and examples).
+
+1. `GLM` implements the Generalized Linear Models 
+see [GLM](https://www.florianfelice.com/statinf/econometrics/glm.html?orgn=github) for more details and examples).
+
+1. `stats` allows to use [descriptive](https://www.florianfelice.com/statinf/stats/tests.html?orgn=github) and
+[tests](https://www.florianfelice.com/statinf/stats/descriptive.html?orgn=github) statistics.
+
+1. `data` is a module to process data such as [data generation](https://www.florianfelice.com/statinf/data/generate.html#statinf.data.GenerateData.generate_dataset?orgn=github),
+[One Hot Encoding](https://www.florianfelice.com/statinf/data/process.html#statinf.data.ProcessData.OneHotEncoding?orgn=github) and others
+(see [data processing](https://www.florianfelice.com/statinf/data/process.html?orgn=github) or (see [data generation](https://www.florianfelice.com/statinf/data/generate.html?orgn=github) modules for more details).
+
+
+You can find the below examples and many more on [https://www.florianfelice.com/statinf](https://www.florianfelice.com/statinf?orgn=github).
+Stay tuned with the future [releases](https://www.florianfelice.com/statinf/updates/release.html?orgn=github).
+
+
+
+### 3.1. [OLS](https://www.florianfelice.com/statinf/econometrics/ols.html?orgn=github)
+
+`statinf` comes with the OLS regression implemented with the analytical formula:
+
+![(X'X)^{-1}X'Y](https://latex.codecogs.com/svg.latex?\Large&space;x=(X'X)^{-1}X'Y)
+
+
+
+```python
+from statinf.regressions import OLS
+from statinf.data import generate_dataset
+
+# Generate a synthetic dataset
+data = generate_dataset(coeffs=[1.2556, -0.465, 1.665414, 2.5444, -7.56445], n=1000, std_dev=1.6)
+
+# We set the OLS formula
+formula = "Y ~ X0 + X1 + X2 + X3 + X4 + X1*X2 + exp(X2)"
+# We fit the OLS with the data, the formula and without intercept
+ols = OLS(formula, df, fit_intercept=True)
+
+ols.summary()
+```
+
+The output will be:
+
+```bash
+==================================================================================
+|                                  OLS summary                                   |
+==================================================================================
+| R²             =            0.98475 | R² Adj.      =                   0.98464 |
+| n              =                999 | p            =                         7 |
+| Fisher value   =          10676.727 |                                          |
+==================================================================================
+| Variables         | Coefficients   | Std. Errors  | t-values   | Probabilities |
+==================================================================================
+| X0                |         1.3015 |      0.03079 |     42.273 |     0.0   *** |
+| X1                |       -0.48712 |      0.03123 |    -15.597 |     0.0   *** |
+| X2                |        1.62079 |      0.04223 |     38.377 |     0.0   *** |
+| X3                |        2.55237 |       0.0326 |     78.284 |     0.0   *** |
+| X4                |       -7.54776 |      0.03247 |   -232.435 |     0.0   *** |
+| X1*X2             |        0.03626 |      0.02866 |      1.265 |   0.206       |
+| exp(X2)           |       -0.00929 |      0.01551 |     -0.599 |   0.549       |
+==================================================================================
+| Significance codes: 0. < *** < 0.001 < ** < 0.01 < * < 0.05 < . < 0.1 < '' < 1 |
+```
+
+
+
+### 3.2. [GLM](https://www.florianfelice.com/statinf/econometrics/glm.html?orgn=github)
+
+The logistic regression can be used for binary classification where ![Y](https://latex.codecogs.com/svg.latex?\Large&space;Y) follows a Bernoulli distribution. With ![X](https://latex.codecogs.com/svg.latex?\Large&space;X) being the matrix of regressors, we have:
+
+![p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}}](https://latex.codecogs.com/svg.latex?\Large&space;p=\mathbb{P}(Y=1)=\dfrac{1}{1+e^{-X\beta}})
+
+
+We then implement the regression with:
+
+```python
+from statinf.regressions import GLM
+from statinf.data import generate_dataset
+
+# Generate a synthetic dataset
+data = generate_dataset(coeffs=[1.2556, -6.465, 1.665414, -1.5444], n=2500, std_dev=10.5, binary=True)
+
+# We split data into train/test/application
+train = data.iloc[0:1000]
+test = data.iloc[1001:2000]
+
+
+# We set the linear formula for Xb
+formula = "Y ~ X0 + X1 + X2 + X3"
+logit = GLM(formula, train, test_set=test)
+
+# Fit the model
+logit.fit(plot=False, maxit=10)
+
+logit.get_weights()
+```
+
+The ouput will be:
+
+```bash
+==================================================================================
+|                                  Logit summary                                 |
+==================================================================================
+| McFadden R²     =          0.67128 | McFadden R² Adj.    =              0.6424 |
+| Log-Likelihood  =          -227.62 | Null Log-Likelihood =             -692.45 |
+| LR test p-value =              0.0 | Covariance          =           nonrobust |
+| n               =              999 | p                   =                  5  |
+| Iterations      =                8 | Convergence         =                True |
+==================================================================================
+| Variables         | Coefficients   | Std. Errors  | t-values   | Probabilities |
+==================================================================================
+| X0                |       -1.13024 |      0.10888 |    -10.381 |     0.0   *** |
+| X1                |        0.02963 |      0.07992 |      0.371 |   0.711       |
+| X2                |       -1.40968 |       0.1261 |    -11.179 |     0.0   *** |
+| X3                |         0.5253 |      0.08966 |      5.859 |     0.0   *** |
+==================================================================================
+| Significance codes: 0. < *** < 0.001 < ** < 0.01 < * < 0.05 < . < 0.1 < '' < 1 |
+==================================================================================
+```
+
+
+### 3.3. [Multi Layer Perceptron](https://www.florianfelice.com/statinf/deeplearning/neuralnetwork.html?orgn=github)
+
+You can train a Neural Network using the `MLP` class.
+The below example shows how to train an MLP with 1 single linear layer. It is equivalent to implement an OLS with Gradient Descent.
+
+```python
+from statinf.data import generate_dataset
+from statinf.ml import MLP, Layer
+
+# Generate the synthetic dataset
+data = generate_dataset(coeffs=[1.2556, -6.465, 1.665414, 1.5444], n=1000, std_dev=1.6)
+
+Y = ['Y']
+X = [c for c in data.columns if c not in Y]
+
+# Initialize the network and its architecture
+nn = MLP()
+nn.add(Layer(4, 1, activation='linear'))
+
+# Train the neural network
+nn.train(data=data, X=X, Y=Y, epochs=1, learning_rate=0.001)
+
+# Extract the network's weights
+print(nn.get_weights())
+```
+
+Output:
+
+```python
+{'weights 0': array([[ 1.32005564],
+       [-6.38121934],
+       [ 1.64515704],
+       [ 1.48571785]]), 'bias 0': array([0.81190412])}
+```
+
