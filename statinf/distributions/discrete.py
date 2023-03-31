@@ -72,14 +72,18 @@ class Discrete:
     def _fast_fit(self):
         return ValueError('Fast or auto fit is not allowed for this distribution, please chose another value')
 
-    def _fit(self, data, bounds=None, init_params=np.array([1]), verbose=False, method='auto'):
+    def _fit(self, data, bounds=None, init_params=np.array([1]), verbose=False, method='auto', args=()):
         if method.lower() in ['auto', 'fast']:
             res = self._fast_fit(data)
         elif method in scipy_methods:
+            if args == ():
+                nll_args = (data,)
+            else:
+                nll_args = sum(((data,), args), ())
             res = scipy.optimize.minimize(
                 fun=self.nll_fun,
                 x0=init_params,
-                args=(data,),
+                args=nll_args,
                 method=method,
                 bounds=bounds
             )
@@ -306,6 +310,8 @@ class CMPoisson(Discrete):
             assert self.nu_ >= 0, ValueError('Value for parameter nu must be greater or equal to 0 (nu_ >= 0)')
             self._Z = self.Z()
 
+        self.nll_fun = lambda params, data, j: self.nloglike(params=params, data=data, j=j)
+
     def Z(self, j=None) -> float:
         """Compute the :math:`Z` factor, normalizing constant.
 
@@ -415,7 +421,7 @@ class CMPoisson(Discrete):
         ll = (math.log(lambda_) * np.sum(X)) - (nu_ * np.sum(_log_fact)) - (len(X) * log_Z)
         return -ll
 
-    def fit(self, data, method='L-BFGS-B', init_params=np.array([1., 1.]), **kwargs) -> dict:
+    def fit(self, data, method='L-BFGS-B', init_params=np.array([1., 1.]), j=None) -> dict:
         """Estimates the parameters :math:`\\lambda` and :math:`\\nu` of the distribution from empirical data based on Maximum Likelihood Estimation.
 
         .. note::
@@ -433,9 +439,10 @@ class CMPoisson(Discrete):
         :return: Estimated parameters
         :rtype: obj:`dict`
         """
+        j = j if j else self.j
         bounds = [(self.eps, None), (self.eps, None)]
 
-        res = self._fit(data=data, bounds=bounds, method=method, init_params=init_params, **kwargs)
+        res = self._fit(data=data, bounds=bounds, method=method, init_params=init_params, args=(j,))
         self.lambda_ = res.x[0]
         self.nu_ = res.x[1]
         self._Z = self.Z()
