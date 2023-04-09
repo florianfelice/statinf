@@ -6,6 +6,7 @@ import datetime
 
 import scipy
 from scipy import optimize
+import warnings
 
 
 scipy_methods = ['BFGS', 'L-BFGS-B', 'Newton-CG', 'CG', 'Powell', 'Nelder-Mead']
@@ -308,7 +309,9 @@ class CMPoisson(Discrete):
         if (self.lambda_ is not None) & (self.nu_ is not None):
             assert self.lambda_ >= 0, ValueError('Value for parameter lambda must be strictly greater to 0 (lambda_ > 0)')
             assert self.nu_ >= 0, ValueError('Value for parameter nu must be greater or equal to 0 (nu_ >= 0)')
+            warnings.filterwarnings("error")
             self._Z = self.Z()
+            warnings.resetwarnings()
 
         self.nll_fun = lambda params, data, j: self.nloglike(params=params, data=data, j=j)
 
@@ -338,19 +341,29 @@ class CMPoisson(Discrete):
         z_i = 0
         for i in range(j):
             _dec = False
+            # We use a decimal placeholder variable in case we encounter overflow errors (number is too long).
+            # We don't use decimal as a default but only in case of error because it slows down computations,
+            # therefore, by default we use light and simple format and call Decimal when needed.
+            # For instances where we need Decimal, we will transform back the ratio of decimals to float as
+            # the value will be of reasonable size and not too long for a classical float.
+
+            # Compute the denominator
             try:
-                _denom = math.factorial(i)**self.nu_
+                _denom = math.factorial(i) ** self.nu_
             except OverflowError:
-                _denom = Decimal(math.factorial(i))**Decimal(self.nu_)
+                # If overflow error (i.e. output is too long), use Decimal format
+                _denom = Decimal(math.factorial(i)) ** Decimal(self.nu_)
                 _dec = True
             # Compute the numerator
             try:
-                _num = self.lambda_**i
-            except OverflowError:
-                _denom = Decimal(self.lambda_)**Decimal(i)
+                _num = self.lambda_ ** i
+            except RuntimeWarning:
+                # If runtime warning it is similar to overflow error (i.e. output is too long), use Decimal format
+                _num = Decimal(self.lambda_) ** Decimal(i)
                 _dec = True
 
             if _dec:
+                _denom = Decimal(_denom)
                 _num = Decimal(_num)
             z_i += float(_num / _denom)
 
@@ -376,9 +389,9 @@ class CMPoisson(Discrete):
         # Compute $\lambda^{x}$
         _pow = [pow(self.lambda_, _x) for _x in x]
 
+        _dec = False
         try:
             _pow = [float(p) for p in _pow]
-            _dec = False
         except OverflowError:
             # Inf the integers to compute are too large, we use decimal format
             # Ref: https://stackoverflow.com/questions/16174399/overflowerror-long-int-too-large-to-convert-to-float-in-python
@@ -412,28 +425,42 @@ class CMPoisson(Discrete):
         :return: Negative log-likelihood
         :rtype: :obj:`float`
         """
-        # TODO: improve function so param j can be changed from calling fit() function
         lambda_ = params[0]
         nu_ = params[1]
         X = np.asarray(data)
 
         z_i = 0
         for i in range(j):
+            _dec = False
+            # We use a decimal placeholder variable in case we encounter overflow errors (number is too long).
+            # We don't use decimal as a default but only in case of error because it slows down computations,
+            # therefore, by default we use light and simple format and call Decimal when needed.
+            # For instances where we need Decimal, we will transform back the ratio of decimals to float as
+            # the value will be of reasonable size and not too long for a classical float.
+
+            # Compute denominator
             try:
                 # Try normal formula
                 _denom = math.factorial(i) ** nu_
-                _dec = False
             except OverflowError:
                 # If overflow error (i.e. output is too long), use Decimal format
                 _denom = Decimal(math.factorial(i)) ** Decimal(nu_)
                 _dec = True
 
             # Compute numerator
-            _num = lambda_ ** i
+            try:
+                _num = lambda_ ** i
+            except RuntimeWarning:
+                # If runtime warning it is similar to overflow error (i.e. output is too long), use Decimal format
+                _num = Decimal(lambda_) ** Decimal(i)
+                _dec = True
+
             # If decimal was used
             if _dec:
-                # If decimal was used for denominator, we also use for numerator (for format consistency)
+                # If decimal was used for one of denominator or denominator, we apply decimal to all (for format consistency)
+                _denom = Decimal(_denom)
                 _num = Decimal(_num)
+
             # Then compute the ratio and transform to float (whether decimal was used or not)
             z_i += float(_num / _denom)
 
@@ -462,6 +489,8 @@ class CMPoisson(Discrete):
         :return: Estimated parameters
         :rtype: obj:`dict`
         """
+        # We transform warnings as error (for overflow) to handle in try / except: https://stackoverflow.com/questions/5644836/
+        warnings.filterwarnings("error")
         j = j if j else self.j
         bounds = [(self.eps, None), (self.eps, None)]
 
@@ -469,6 +498,7 @@ class CMPoisson(Discrete):
         self.lambda_ = res.x[0]
         self.nu_ = res.x[1]
         self._Z = self.Z()
+        warnings.resetwarnings()
 
         out = {'lambda_': self.lambda_, 'nu_': self.nu_}
 
