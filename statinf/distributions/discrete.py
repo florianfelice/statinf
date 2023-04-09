@@ -337,14 +337,19 @@ class CMPoisson(Discrete):
         j = j if j else self.j
         z_i = 0
         for i in range(j):
+            _dec = False
             try:
                 _denom = math.factorial(i)**self.nu_
-                _dec = False
             except OverflowError:
                 _denom = Decimal(math.factorial(i))**Decimal(self.nu_)
                 _dec = True
+            # Compute the numerator
+            try:
+                _num = self.lambda_**i
+            except OverflowError:
+                _denom = Decimal(self.lambda_)**Decimal(i)
+                _dec = True
 
-            _num = self.lambda_**i
             if _dec:
                 _num = Decimal(_num)
             z_i += float(_num / _denom)
@@ -412,10 +417,28 @@ class CMPoisson(Discrete):
         nu_ = params[1]
         X = np.asarray(data)
 
-        z_i = []
+        z_i = 0
         for i in range(j):
-            z_i += [(lambda_**i) / (math.factorial(i)**nu_)]
-        log_Z = np.log(np.sum(z_i))
+            try:
+                # Try normal formula
+                _denom = math.factorial(i) ** nu_
+                _dec = False
+            except OverflowError:
+                # If overflow error (i.e. output is too long), use Decimal format
+                _denom = Decimal(math.factorial(i)) ** Decimal(nu_)
+                _dec = True
+
+            # Compute numerator
+            _num = lambda_ ** i
+            # If decimal was used
+            if _dec:
+                # If decimal was used for denominator, we also use for numerator (for format consistency)
+                _num = Decimal(_num)
+            # Then compute the ratio and transform to float (whether decimal was used or not)
+            z_i += float(_num / _denom)
+
+        # Compute log(Z)
+        log_Z = np.log(z_i)
 
         _log_fact = np.asarray([math.log(math.factorial(_x)) for _x in X])
         ll = (math.log(lambda_) * np.sum(X)) - (nu_ * np.sum(_log_fact)) - (len(X) * log_Z)
