@@ -346,31 +346,19 @@ class CMPoisson(Discrete):
         """
         j = j if j else self.j
 
-        # ## Almost exact form
-        z_i = - np.inf
-        z_last = 0
-        current_j = 0
+        try:
+            _num = [np.exp(_j * np.log(lambda_)) for _j in range(j)]
+            _denom = [np.exp(nu_ * np.sum(np.log(range(1, _j + 1)))) for _j in range(j)]
+        except RuntimeWarning:
+            _num = [np.exp(Decimal(_j) * Decimal(np.log(lambda_))) for _j in range(j)]
+            _denom = [np.exp(Decimal(nu_) * Decimal(np.sum(np.log(range(1, _j + 1))))) for _j in range(j)]
 
-        while (np.abs(z_i - z_last) > self.eps) & (current_j < j):
-            z_last = z_i
-            _log_fact = np.sum(np.log(range(1, current_j)))
-            z_i = self._log_sum(z_i, current_j * math.log(lambda_) - nu_ * _log_fact)
-            current_j += 1
+        z_i = float(np.sum([_n / _d for _n, _d in zip(_num, _denom) if (_n < np.inf) & (_d < np.inf)]))
 
-        if not log:
-            z_i = math.exp(z_i)
+        if log:
+            z_i = math.log(z_i)
 
-        return float(np.sum(z_i))
-
-    def _log_sum(self, x, y):
-        if x == -np.inf:
-            return y
-        elif y == -np.inf:
-            return x
-        elif x > y:
-            return x + math.log(1 + math.exp(y - x))
-        else:
-            return y + math.log(1 + math.exp(x - y))
+        return z_i
 
     def pmf(self, x) -> float:
         """Computes the probability mass function for selected value :obj:`x`.
@@ -402,7 +390,9 @@ class CMPoisson(Discrete):
             _dec = True
 
         # Compute $(x!)^{\nu}$
-        _fact = [pow(np.exp(np.sum(np.log(range(1, _x)))), self.nu_) for _x in x]
+        _fact = [np.exp(self.nu_ * np.sum(np.log(range(1, _x + 1)))) for _x in x]
+        if _dec:
+            _fact = [Decimal(f) for f in _fact]
 
         a = np.array([float(p / f) for p, f in zip(_pow, _fact)])
         return a * (1 / self._Z)
@@ -434,10 +424,12 @@ class CMPoisson(Discrete):
         log_Z = Z(lambda_=lambda_, nu_=nu_, j=j, log=True)
 
         _log_fact = np.asarray([math.log(math.factorial(_x)) for _x in X])
-        ll = (math.log(lambda_) * np.sum(X)) - (nu_ * np.sum(_log_fact)) - (n * log_Z)
+        ll = math.log(lambda_) * np.sum(X)
+        ll += - (nu_ * np.sum(_log_fact))
+        ll += - (n * log_Z)
         return -ll
 
-    def fit(self, data, method='L-BFGS-B', init_params='auto', j=None) -> dict:
+    def fit(self, data, method='L-BFGS-B', init_params='auto', j=None, bounds=None) -> dict:
         """Estimates the parameters :math:`\\lambda` and :math:`\\nu` of the distribution from empirical data based on Maximum Likelihood Estimation.
 
         .. note::
@@ -457,10 +449,11 @@ class CMPoisson(Discrete):
         """
         # We transform warnings as error (for overflow) to handle in try / except: https://stackoverflow.com/questions/5644836/
         j = j if j else self.j
-        bounds = [(self.eps, None), (self.eps, None)]
+        if bounds is None:
+            bounds = [(self.eps, None), (self.eps, None)]
         if init_params == 'auto':
-            _disp = data.std() / data.mean()
-            init_params = np.array([1., _disp])
+            _disp = data.var() / data.mean()
+            init_params = np.array([data.mean(), _disp])
 
         res = self._fit(data=data, bounds=bounds, method=method, init_params=init_params, args=(j,))
         self.lambda_ = res.x[0]
@@ -472,6 +465,6 @@ class CMPoisson(Discrete):
         out = {'lambda_': self.lambda_, 'nu_': self.nu_, 'convergence': res.success}
 
         if method in scipy_methods:
-            out.update({'nll': self.nll})
+            out.update({'loglikelihood': -self.nll})
 
         return out
