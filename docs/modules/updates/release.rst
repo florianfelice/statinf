@@ -7,6 +7,113 @@ This section aims at showing the latest release of the library.
 We show most important releases that included new features.
 Library versions in between are used to fix bugs and implement improvement suggested by users' feedback.
 
+----
+
+
+********************************************************************************************************
+1.2.5 - May 5, 2023 - New distribution :meth:`statinf.distributions.discrete.NegativeBinomial` available
+********************************************************************************************************
+
+Statinf's distributions module now includes a class for the Negative Binomial distribution.
+In the same spirit as already available distributions, the module allows to estimate parameters from data via Maximum Likelihood Estimation (MLE) and generate samples from the estimated (or user-provided) parameters.
+
+In this release, the computations for the normalizing factor in the Conway-Maxwell Poisson distribution (:py:meth:`statinf.distributions.discrete.CMPoisson.Z`) has been improved.
+This now offers stable results of the computation heavy factor improving the results from the parameters estimation.
+The new implementation also simplifies computations of the infinite sum of factorials by using mathematical tricks.
+Exploiting the fact that :math:`a^{b} = \exp(b \cdot \log(a))`, we can simplify factors such as :math:`(j!)^{\nu}` to be :math:`\exp \left(\nu \cdot \sum_{i=1}^{j} {\log(i)} \right)`.
+This significantly speeds up computations while leading to the same results.
+
+The main changes are:
+
+* :py:meth:`statinf.distributions.discrete.NegativeBinomial` for the generic Poisson distribution
+* :py:meth:`statinf.distributions.discrete.CMPoisson.Z` improved implementation of the normalizing factor
+
+
+^^^^^^^^^^^^^^
+How to use it?
+^^^^^^^^^^^^^^
+
+
+.. code::
+
+    from statinf.distributions import NegativeBinomial
+
+    # Let us generate a random sample of size 1000
+    x = NegativeBinomial(n_=5, p_=0.15).sample(size=1000)
+    
+    # We can also estimate the parameters from the generated sample
+    # We just need to initialize the class...
+    nb = NegativeBinomial()
+    
+    # ... and we can fit from the generated sample. The function returns a dictionary
+    nb.fit(x)
+    # The class stores the value of the estimated parameters, 
+    # wo we can generate more samples using the fitted parameters
+    y = nb.sample(200)
+
+
+^^^^^^^^^^^^^^^^^^
+How to install it?
+^^^^^^^^^^^^^^^^^^
+
+.. code::
+
+    pip3 install statinf==1.2.4
+
+
+See more details: :py:meth:`statinf.distributions.discrete.NegativeBinomial` and :py:meth:`statinf.distributions.discrete.CMPoisson.Z`.
+
+----
+
+********************************************************************************************************************
+1.2.0 - February 5, 2023 - New module :meth:`statinf.distributions` available for discrete distributions
+********************************************************************************************************************
+
+Statinf now includes a module for proability distributions.
+The module allows to estimate parameters from data via Maximum Likelihood Estimation (MLE) and generate samples from the estimated (or user-provided) parameters.
+The module currently include discrete distributions, continuous distributions will be added later.
+
+The main additions are:
+
+* :py:meth:`statinf.distributions.discrete.Poisson` for the generic Poisson distribution
+* :py:meth:`statinf.distributions.discrete.CMPoisson` for the Conway-Maxwell Poisson distribution, a generalization of the Poisson
+
+More discrete and continuous distributions will be added soon.
+
+^^^^^^^^^^^^^^
+How to use it?
+^^^^^^^^^^^^^^
+
+
+.. code::
+
+    from statinf.distributions import Poisson
+    
+    # Let us generate a random sample of size 1000
+    x = Poisson(lambda_=2.5).sample(size=1000)
+    
+    # We can also estimate the parameter from the generated sample
+    # We just need to initialize the class...
+    poiss = Poisson()
+    
+    # ... and we can fit from the generated sample. The function returns a dictionary
+    poiss.fit(x)
+    
+    # The class stores the value of the estimated parameters,
+    # so we can generate more samples using the fitted parameters
+    y = poiss.sample(200)
+
+
+^^^^^^^^^^^^^^^^^^
+How to install it?
+^^^^^^^^^^^^^^^^^^
+
+.. code::
+
+    pip3 install statinf==1.2.0
+
+
+See more details: :py:meth:`statinf.distributions.discrete.Discrete`.
 
 ----
 

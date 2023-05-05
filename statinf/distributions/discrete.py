@@ -5,6 +5,7 @@ from decimal import Decimal
 import datetime
 
 import scipy
+from scipy.special import factorial, gamma, gammaln
 from scipy import optimize
 import warnings
 
@@ -89,6 +90,7 @@ class Discrete:
                 bounds=bounds
             )
             self.nll = res.fun
+            self.ll = -self.nll
 
             if verbose:
                 print(res)
@@ -96,6 +98,7 @@ class Discrete:
             raise ValueError(f"The selected method is not valid, should be on of {', '.join(scipy_methods)}")
 
         return res
+
 
 class Poisson(Discrete):
     def __init__(self, lambda_=None, *args, **kwargs) -> None:
@@ -241,7 +244,7 @@ class Poisson(Discrete):
         out = {'lambda_': self.lambda_}
 
         if method in scipy_methods:
-            out.update({'nll': self.nll})
+            out.update({'loglikelihood': self.ll})
 
         return out
 
@@ -441,7 +444,7 @@ class CMPoisson(Discrete):
         :type data: :obj:`numpy.array` or :obj:`list` or :obj:`pandas.Series`
         :param method: Optimization method to estimate the parameters, defaults to 'L-BFGS-B'
         :type method: :obj:`str`, optional
-        :param init_params: Initial parameters for the optimization method, defaults to obj:`np.array([1., 1.])`
+        :param init_params: Initial parameters for the optimization method, defaults to :obj:`np.array([1., 0.5])`
         :type init_params: :obj:`numpy.array`, optional
 
         :return: Estimated parameters
@@ -449,10 +452,11 @@ class CMPoisson(Discrete):
         """
         # We transform warnings as error (for overflow) to handle in try / except: https://stackoverflow.com/questions/5644836/
         j = j if j else self.j
+        data = np.asarray(data)
         if bounds is None:
             bounds = [(self.eps, None), (self.eps, None)]
         if init_params == 'auto':
-            _disp = data.var() / data.mean()
+            _disp = data.mean() / data.var()
             init_params = np.array([data.mean(), _disp])
 
         res = self._fit(data=data, bounds=bounds, method=method, init_params=init_params, args=(j,))
@@ -465,6 +469,120 @@ class CMPoisson(Discrete):
         out = {'lambda_': self.lambda_, 'nu_': self.nu_, 'convergence': res.success}
 
         if method in scipy_methods:
-            out.update({'loglikelihood': -self.nll})
+            out.update({'loglikelihood': self.ll})
+
+        return out
+
+
+class NegativeBinomial(Discrete):
+    def __init__(self, r_=None, p_=None, *args, **kwargs) -> None:
+        """Negative Binomial distribution.
+
+        :formulae: The probability mass function (pmf) is defined by
+
+            .. math:: \\mathbb{P}(X = x | r, p) = \\dfrac{(x + r - 1)!}{(r - 1)! x!} (1 - p)^{k} p^{r}
+
+        :example:
+
+        >>> from statinf.distributions import NegativeBinomial
+        >>> # Let us generate a random sample of size 1000
+        >>> x = NegativeBinomial(n_=5, p_=0.15).sample(size=1000)
+        >>> # We can also estimate the parameters from the generated sample
+        >>> # We just need to initialize the class...
+        >>> nb = NegativeBinomial()
+        >>> # ... and we can fit from the generated sample. The function returns a dictionary
+        >>> nb.fit(x)
+        ... {'r_': 5, 'p_': 0.15069905301345346, 'convergence': True, 'loglikelihood': -3972.2726626530775}
+        >>> # The class stores the value of the estimated parameters
+        >>> print(nb.p_)
+        ... 0.15069905301345346
+        >>> # So we can generate more samples using the fitted parameters
+        >>> y = nb.sample(200)
+
+
+        :reference: * DeGroot, M. H., & Schervish, M. J. (2012). Probability and statistics. Pearson Education.
+        """
+        super(NegativeBinomial, self).__init__(*args, **kwargs)
+        self.r_ = r_
+        self.p_ = p_
+
+    def pmf(self, x) -> float:
+        """Computes the probability mass function for selected value :obj:`x`.
+
+        :formula: The probability mass function (pmf) is computed by
+
+            .. math:: \\mathbb{P}(X = x | r, p) = \\dfrac{(x + r - 1)!}{(r - 1)! x!} (1 - p)^{k} p^{r}
+
+        :param x: Value to be evaluated
+        :type x: :obj:`int`
+
+        :return: Probability :math:`\\mathbb{P}(X = x | r, p)`
+        :rtype: :obj:`float`
+        """
+        x = [x] if type(x) in [float, int] else x
+
+        _comb = np.array([scipy.special.comb(_x + self.r_ - 1, _x, exact=True) for _x in x])
+
+        # _comb = np.array([_a / _b for _a, _b in zip(_num, _denom)])
+        _m1 = np.array([pow(1 - self.p_, _x) for _x in x])
+        _m2 = pow(self.p_, self.r_)
+        return _comb * _m1 * _m2
+
+    @staticmethod
+    def nloglike(params, data, eps=10e-4) -> float:
+        """Static method to estumate the negative likelihood (used in :meth:`statinf.distributions.discrete.NegativeBinomial.fit` method).
+
+        :formula: The log-likelihood function :math:`l` is defined by
+
+            .. math:: \\mathcal{l}(x_1, ..., x_n | r, p) &= \\sum_{i=1}^{n} {\\log(\\Gamma(x_i + r))} \\sum_{i=1}^{n} {\\log(x_i!)} - N \\log(\\Gamma(r)) \\\\ &+ \\sum_{i=1}^{n} {x_i \\log(1-p)} + N r \\log(p)
+
+        :param params: List of parameters :math:`r` and :math:`p`
+        :type params: :obj:`list`
+        :param data: Data to evaluate the netative log-likelihood on
+        :type data: :obj:`numpy.array` or :obj:`list` or :obj:`pandas.Series`
+
+        :return: Negative log-likelihood
+        :rtype: :obj:`float`
+        """
+        r_ = params[0]
+        p_ = params[1]
+        X = np.asarray(data)
+        n = len(X)
+
+        ll = np.sum(gammaln(X + r_))
+        ll += - np.sum(np.log(factorial(X)))
+        ll += - n * (gammaln(r_))
+        ll += n * r_ * np.log(p_)
+        ll += np.sum(X * np.log(1 - (p_ if p_ < 1 else 1 - eps)))
+        return -ll
+
+    def fit(self, data, method='L-BFGS-B', init_params=[1, 0.5], bounds=None, **kwargs) -> dict:
+        """Estimates the parameters :math:`\\lambda` and :math:`\\nu` of the distribution from empirical data based on Maximum Likelihood Estimation.
+
+        .. note::
+
+            There is no close form to estimate the parameters. Therefore, only MLE is available (no fast method).
+
+        :param data: Data to fit and estimate parameters from.
+        :type data: :obj:`numpy.array` or :obj:`list` or :obj:`pandas.Series`
+        :param method: Optimization method to estimate the parameters, defaults to 'L-BFGS-B'
+        :type method: :obj:`str`, optional
+        :param init_params: Initial parameters for the optimization method, defaults to :obj:`np.array([1., 1.])`
+        :type init_params: :obj:`numpy.array`, optional
+
+        :return: Estimated parameters
+        :rtype: :obj:`dict`
+        """
+        if bounds is None:
+            bounds = [(self.eps, None), (self.eps, 1)]
+
+        res = self._fit(data=data, bounds=bounds, method=method, init_params=init_params, **kwargs)
+        self.r_ = int(round(res.x[0], 0))
+        self.p_ = res.x[1]
+
+        out = {'r_': self.r_, 'p_': self.p_, 'convergence': res.success}
+
+        if method in scipy_methods:
+            out.update({'loglikelihood': self.ll})
 
         return out
