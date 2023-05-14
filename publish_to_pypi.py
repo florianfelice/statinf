@@ -114,7 +114,7 @@ if args.publish:
     os.system("git add --all")
     os.system(f"git tag -a v{new_version} -m 'Version {new_version} on pypi. {args.message}'")
     os.system(f"git commit -a -m 'Upload version {new_version} to pypi. {args.message}'")
-    os.system("git push")
+    os.system(f"git push origin v{new_version}")
     git_update = 'and changes pushed to git'
 else:
     git_update = ""

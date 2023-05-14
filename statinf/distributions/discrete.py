@@ -313,7 +313,7 @@ class CMPoisson(Discrete):
         if (self.lambda_ is not None) & (self.nu_ is not None):
             assert self.lambda_ >= 0, ValueError('Value for parameter lambda must be strictly greater to 0 (lambda_ > 0)')
             assert self.nu_ >= 0, ValueError('Value for parameter nu must be greater or equal to 0 (nu_ >= 0)')
-            warnings.filterwarnings("error")
+            warnings.filterwarnings("ignore", message="overflow encountered")
             self._Z = self.Z(lambda_=self.lambda_, nu_=self.nu_, j=self.j)
             warnings.resetwarnings()
 
@@ -459,10 +459,10 @@ class CMPoisson(Discrete):
             _disp = data.mean() / data.var()
             init_params = np.array([data.mean(), _disp])
 
+        warnings.filterwarnings("ignore", message="overflow encountered")
         res = self._fit(data=data, bounds=bounds, method=method, init_params=init_params, args=(j,))
         self.lambda_ = res.x[0]
         self.nu_ = res.x[1]
-        warnings.filterwarnings("error")
         self._Z = self.Z(lambda_=self.lambda_, nu_=self.nu_, j=j)
         warnings.resetwarnings()
 
