@@ -511,3 +511,93 @@ def wilcoxon(x, y=None, alpha=0.05, alternative='two-sided', mode='auto', zero_m
         return z, cv, p
     else:
         print(_summ)
+
+
+def dispersion_test(x, alpha=0.05, two_sided=True, return_tuple=False):
+    """Dispersion test for count data.
+
+        In the two-sided setup, we aim at testing:
+
+        .. math:: H_{0}: \\mathbb{E}(X) = \\mathbb{V}(X) \\text{  against  } H_{1}: \\mathbb{E}(X) \\neq \\mathbb{V}(X)
+
+        The p-value is computed as:
+
+        .. math:: \\mathbb{P}(T \\leq t \\mid H_{0} \\text{ holds})
+
+        with, under :math:`H_{0}`:
+
+        .. math:: t = \\dfrac{\\dfrac{1}{n-1} \\sum_{i=1}^{n} (X_i - \\bar{X})^2 - \\bar{X}}{\\sqrt{\\dfrac{2}{n-1}} \\bar{X}} \\sim \\chi^2_{n-1}
+
+    :param x: Input variable. Format can be :obj:`numpy.array`, :obj:`list` or :obj:`pandas.Series`.
+    :type x: :obj:`numpy.array`
+    :param alpha: Confidence level, defaults to 0.05.
+    :type alpha: :obj:`float`, optional
+    :param two_sided: Perform a two-sided test, defaults to True.
+    :type two_sided: :obj:`bool`, optional
+    :param return_tuple: Return a tuple with t statistic, critical value and p-value, defaults to False.
+    :type return_tuple: :obj:`bool`, optional
+
+    :example:
+
+    >>> from statinf import stats
+    >>> stats.dispersion_test([36, 31, 39, 25, 40, 36, 30, 36, 27, 35, 28, 37, 39, 39, 30])
+    ... +------------------------------------------------------------+
+    ... |                      Dispersion test                       |
+    ... +------------+----------------+------------+---------+-------+
+    ... |     df     | Critical value |    T-value | p-value |   H0  |
+    ... +------------+----------------+------------+---------+-------+
+    ... |         15 |   26.118948045 | -0.7499767 |     0.0 | False |
+    ... +------------+----------------+------------+---------+-------+
+    ...  * We reject H0, hence E(X) != V(X)
+    ...  * E(X) = 33.87
+    ...  * V(X) = 22.65
+
+    :reference: * Böhning, D. (1994). A note on a test for Poisson overdispersion. Biometrika, 81(2), 418-419.
+        * de Oliveira, J. T. (1965). Some elementary tests of mixtures of discrete distributions. Classical and contagious discrete distributions, 379-384.
+
+    :return: Summary for the test or tuple statistic, critical value, p-value.
+    :rtype: :obj:`str` or :obj:`tuple`
+    """
+    # Define test degrees of freedom
+    if two_sided:
+        quant_order = 1 - (alpha / 2)
+        h0 = 'E(X) = V(X)'
+        h1 = 'E(X) != V(X)'
+    else:
+        quant_order = 1 - alpha
+        h0 = 'E(X) <= V(X)'
+        h1 = 'E(X) > V(X)'
+
+    # Input vector as array
+    x = np.asarray(x)
+    # Sample size
+    n = len(x)
+    # Compute empirical mean to estimate \lambda
+    x_bar = x.mean()
+    # Compute empirical variance
+    S_2 = np.array([(i - x_bar)**2 for i in x]).sum()
+    # Test statistic's numerator
+    _num = 1 / (n - 1)
+    _num *= S_2
+    _num -= x_bar
+    # Test statistic's denominator
+    _denom = np.sqrt(2 / (n - 1))
+    _denom *= x_bar
+    # Test statistic
+    t = _num / _denom
+
+    cv = scp.chi2.ppf(quant_order, df=n - 1)
+
+    p = scp.chi2.cdf(t, df=n - 1)
+
+    extra = f" * E(X) = {x.mean():.2f}\n * V(X) = {x.var():.2f}"
+
+    _summ = test_summary(df=n, critical_value=cv, t_value=t,
+                         p_value=p, alpha=alpha,
+                         title='Dispersion test',
+                         h0=h0, h1=h1, extra=extra)
+
+    if return_tuple:
+        return t, cv, p
+    else:
+        print(_summ)

@@ -69,7 +69,9 @@ def summary(s):
     return summ
 
 
-def test_summary(df, critical_value, t_value, p_value, alpha=0.05, title='', h0='H0', h1='H0 does not hold', extra='', h0_conclu='', h1_conclu=''):
+def test_summary(df, critical_value, t_value, p_value, alpha=0.05,
+                 title='', h0='H0', h1='H0 does not hold',
+                 extra='', h0_conclu='', h1_conclu=''):
 
     # Format for output
 
