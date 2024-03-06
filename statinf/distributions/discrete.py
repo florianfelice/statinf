@@ -8,6 +8,7 @@ import scipy
 from scipy.special import factorial, gamma, gammaln
 from scipy import optimize
 import warnings
+from numba import njit
 
 
 scipy_methods = ['BFGS', 'L-BFGS-B', 'Newton-CG', 'CG', 'Powell', 'Nelder-Mead']
@@ -319,7 +320,9 @@ class CMPoisson(Discrete):
 
         self.nll_fun = lambda params, data, j: self.nloglike(params=params, data=data, j=j, Z=self.Z)
 
-    def Z(self, lambda_, nu_, j=None, log=False) -> float:
+    @staticmethod
+    @njit
+    def Z(lambda_, nu_, j=None, log=False) -> float:
         """Compute the :math:`Z` factor, normalizing constant.
 
         The factor :math:`Z(\\lambda, \\nu)` serves as a normalizing constant such that the distribution satisfies the basic probability axioms (i.e. the probability mass function sums up to 1).
@@ -347,21 +350,15 @@ class CMPoisson(Discrete):
         :return: Normalizing factor :math:`Z`
         :rtype: :obj:`float`
         """
-        j = j if j else self.j
-
-        try:
-            _num = [np.exp(_j * np.log(lambda_)) for _j in range(j)]
-            _denom = [np.exp(nu_ * np.sum(np.log(range(1, _j + 1)))) for _j in range(j)]
-        except RuntimeWarning:
-            _num = [np.exp(Decimal(_j) * Decimal(np.log(lambda_))) for _j in range(j)]
-            _denom = [np.exp(Decimal(nu_) * Decimal(np.sum(np.log(range(1, _j + 1))))) for _j in range(j)]
-
-        z_i = float(np.sum([_n / _d for _n, _d in zip(_num, _denom) if (_n < np.inf) & (_d < np.inf)]))
-
+        (z, log_lam, log_fac_i) = (1, np.log(lambda_), 0)
+        for i in range(1, j):
+            log_fac_i += np.log(i)
+            z += np.exp((i * log_lam) - (nu_ * log_fac_i))
+        
         if log:
-            z_i = math.log(z_i)
+            z = math.log(z)
 
-        return z_i
+        return z
 
     def pmf(self, x) -> float:
         """Computes the probability mass function for selected value :obj:`x`.
