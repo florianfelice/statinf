@@ -103,10 +103,10 @@ pwd = config.get('PYPI_PASSWORD')
 if args.test:
     # If test, we upload on pypi test
     test_dest = '--repository-url https://test.pypi.org/legacy/'
-    os.system(f'python3 -m twine upload {test_dest} {lib_path}/dist/* --username {user} --password {pwd}')
+    os.system(f'python3 -m twine upload {test_dest} {lib_path}/dist/*')
 else:
     # Else we publish on standard pypi
-    os.system(f'python3 -m twine upload {lib_path}/dist/* --username {user} --password {pwd}')
+    os.system(f'python3 -m twine upload {lib_path}/dist/*')
 
 
 # Commit to git and push

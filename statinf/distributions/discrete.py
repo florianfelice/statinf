@@ -354,7 +354,7 @@ class CMPoisson(Discrete):
         for i in range(1, j):
             log_fac_i += np.log(i)
             z += np.exp((i * log_lam) - (nu_ * log_fac_i))
-        
+
         if log:
             z = math.log(z)
 

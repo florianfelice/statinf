@@ -14,6 +14,7 @@ statinf/data/GenerateData.py
 statinf/data/ProcessData.py
 statinf/data/__init__.py
 statinf/distributions/__init__.py
+statinf/distributions/continuous.py
 statinf/distributions/discrete.py
 statinf/ml/__init__.py
 statinf/ml/activations.py
